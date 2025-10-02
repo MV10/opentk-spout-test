@@ -35,6 +35,8 @@ public class Receiver : OpenTKWindow, IDisposable
         textureUnit = -1;
         if(receiver.ReceiveTexture())
         {
+            // Help!
+            // https://github.com/leadedge/Spout2/issues/128
             textureUnit = (int)receiver.SharedTextureID;
 
             if(receiver.IsUpdated)
