@@ -42,7 +42,7 @@ internal class Program
 
     static void Help()
     {
-        Console.WriteLine("Usage: opentk-spout-test [sender|receiver] \"[name]\"");
+        Console.WriteLine("Usage: opentk-spout-test [sender|receiver|alloc] \"[name]\"");
         Console.WriteLine("  sender   - transmit shader output frames");
         Console.WriteLine("  receiver - apply shader to input frames (shared texture)");
         Console.WriteLine("  alloc    - apply shader to input frames (internal texture)");
