@@ -10,9 +10,7 @@ internal class Program
     {
         Console.WriteLine("\nOpenTK Spout Test\n\n");
 
-        if(args.Length < 1 || args.Length > 2 
-          || (!args[0].Equals("sender", StringComparison.InvariantCultureIgnoreCase)
-          && !args[0].Equals("receiver", StringComparison.InvariantCultureIgnoreCase)))
+        if(args.Length < 1 || args.Length > 2)
         {
             Help();
             return;
@@ -26,10 +24,16 @@ internal class Program
         windowConfig.StartFullScreen = false;
         windowConfig.OpenTKNativeWindowSettings.APIVersion = new Version(4, 5);
 
-        if(args[0].Equals("sender", StringComparison.InvariantCultureIgnoreCase))
-            Window = new Sender(windowConfig, spoutName);
-        else
-            Window = new Receiver(windowConfig, spoutName);
+        args[0] = args[0].Trim().ToLowerInvariant();
+        if (args[0] == "sender") Window = new Sender(windowConfig, spoutName);
+        if (args[0] == "receiver") Window = new Receiver(windowConfig, spoutName);
+        if (args[0] == "alloc") Window = new AllocatingReceiver(windowConfig, spoutName);
+
+        if(Window is null)
+        {
+            Help();
+            return;
+        }
 
         Window.Focus();
         Window.Run();
@@ -40,7 +44,8 @@ internal class Program
     {
         Console.WriteLine("Usage: opentk-spout-test [sender|receiver] \"[name]\"");
         Console.WriteLine("  sender   - transmit shader output frames");
-        Console.WriteLine("  receiver - apply shader to input frames");
+        Console.WriteLine("  receiver - apply shader to input frames (shared texture)");
+        Console.WriteLine("  alloc    - apply shader to input frames (internal texture)");
         Console.WriteLine("  name     - optional spout name (use quotes if name has spaces)");
     }
 }

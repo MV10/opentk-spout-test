@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="eyecandy" Version="4.2.0" />
-    <PackageReference Include="Spout.NETCore" Version="1.0.0" />
+    <PackageReference Include="Spout.NETCore" Version="2.7.15" />
   </ItemGroup>
 
 </Project>
