@@ -13,3 +13,6 @@ Currently using [Spout.NETCore](https://github.com/AWAS666/Spout.NETCore) bindin
 Note that my [eyecandy](https://github.com/MV10/eyecandy) library is used as a convenience. It provides some basic functionality from the [OpenTK](https://github.com/opentk/opentk) windowing support, shader compilation, and uniform handling, but it's entirely incidental to the Spout processing. OpenTK itself is a thin wrapper around OpenGL and GLFW windowing APIs.
 
 As of this test, Spout2 is at a years-newer version, but currently the CppSharp package used to generate the bindings is years out of date and the available package is incompatible with VS2022 / Clang19. What is shown here seems to work, so hopefully this will carry my real project along until CppSharp is finally updated again.
+
+<img width="991" height="1063" alt="image" src="https://github.com/user-attachments/assets/1facb76d-5115-4b76-a307-80bd6e70f2cc" />
+
