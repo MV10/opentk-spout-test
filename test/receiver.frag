@@ -17,7 +17,6 @@ float displacement_amount = 0.02; // how much the spiral twists
 
 const float PI = 3.14159265359;
 const float TWO_PI = 6.28318530718;
-const float PI_OVER_TWO = 1.57079632679;
 
 void main()
 {

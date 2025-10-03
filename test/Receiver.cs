@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using Spout.Interop;
+using Spout.Interop.Spoututils;
 
 namespace test;
 
@@ -9,7 +10,7 @@ public class Receiver : OpenTKWindow, IDisposable
 {
     private SpoutReceiver receiver;
     private string name;
-    private int textureUnit = -1;
+    private int textureID = -1;
 
     public Receiver(EyeCandyWindowConfig windowConfig, string spoutName)
         : base(windowConfig, "passthrough.vert", "receiver.frag")
@@ -23,7 +24,8 @@ public class Receiver : OpenTKWindow, IDisposable
         base.OnLoad();
 
         receiver = new();
-        //Spout.Interop.Spoututils.SpoutUtils.EnableLogs();
+        SpoutUtils.OpenSpoutConsole();
+        SpoutUtils.EnableLogs();
 
         // Unnecessary?
         // https://github.com/leadedge/Spout2/issues/119#issuecomment-2574113975
@@ -32,17 +34,15 @@ public class Receiver : OpenTKWindow, IDisposable
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        textureUnit = -1;
-        if(receiver.ReceiveTexture())
+        textureID = -1;
+        if(receiver.ReceiveTexture()) // should auto-connect
         {
-            // Help!
-            // https://github.com/leadedge/Spout2/issues/128
-            textureUnit = (int)receiver.SharedTextureID;
+            // necessary to call before using the texture, would
+            // indicate size or sender changed, but if we use the
+            // shared texture directly, then we don't store that
+            _ = receiver.IsUpdated;
 
-            if(receiver.IsUpdated)
-            {
-                // ummm...
-            }
+            textureID = (int)receiver.SharedTextureID;
         }
 
         base.OnRenderFrame(e);
@@ -50,14 +50,14 @@ public class Receiver : OpenTKWindow, IDisposable
 
     internal void SetTextureUniformCallback()
     {
-        if (textureUnit == -1) return;
-        _ = receiver.BindSharedTexture();
-        GL.Uniform1(Shader.Uniforms["receivedTexture"].Location, textureUnit);
-        _ = receiver.UnBindSharedTexture;
+        if (textureID == -1) return;
+        Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
     }
 
     public new void Dispose()
     {
         base.Dispose();
+        SpoutUtils.CloseSpoutConsole(true);
+        receiver.Dispose();
     }
 }
