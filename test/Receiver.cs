@@ -29,11 +29,12 @@ public class Receiver : OpenTKWindow, IDisposable
 
         receiver = new();
 
-        // Doesn't seem to work...
-        //SpoutUtils.OpenSpoutConsole();
-        //SpoutUtils.EnableLogs();
+        //receiver.SetFrameCount(true);
 
-        // Unnecessary?
+        // writes to %AppData%\Spout (paste that into File Explorer)
+        //SpoutUtils.EnableSpoutLogFile("test.log", false);
+        
+        // Unnecessary
         // https://github.com/leadedge/Spout2/issues/119#issuecomment-2574113975
         //receiver.SetReceiverName(name);
     }
@@ -43,12 +44,9 @@ public class Receiver : OpenTKWindow, IDisposable
         textureID = -1;
         if(receiver.ReceiveTexture()) // should auto-connect
         {
-            // necessary to call before using the texture, would
-            // indicate size or sender changed, but if we use the
-            // shared texture directly, then we don't store that
-            _ = receiver.IsUpdated;
-
-            textureID = (int)receiver.SharedTextureID;
+            // necessary to call before using the texture or size info etc
+            if (receiver.IsUpdated) textureID = (int)receiver.SharedTextureID;
+            //Console.WriteLine(receiver.SenderFrame);
         }
 
         base.OnRenderFrame(e);
@@ -58,13 +56,14 @@ public class Receiver : OpenTKWindow, IDisposable
     internal void SetTextureUniformCallback()
     {
         if (textureID == -1) return;
+        receiver.BindSharedTexture();
         Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
+        _ = receiver.UnBindSharedTexture;
     }
 
     public new void Dispose()
     {
         base.Dispose();
-        //SpoutUtils.CloseSpoutConsole(true);
         receiver.Dispose();
     }
 }

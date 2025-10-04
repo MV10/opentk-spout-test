@@ -20,6 +20,11 @@ const float TWO_PI = 6.28318530718;
 
 void main()
 {
+    fragColor = vec4(texture(receivedTexture, fragCoord / resolution.xy));  
+}
+
+void disabledmain()
+{
     vec2 uv_screen = fragCoord / resolution.xy;
     vec2 uv = (fragCoord - resolution.xy * 0.5) / resolution.y;
     
