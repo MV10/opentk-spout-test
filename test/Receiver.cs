@@ -9,6 +9,9 @@ namespace test;
 // This version of the receiver attempts to use the shared texture directly
 // https://github.com/leadedge/Spout2/issues/128
 
+// Lynn says there is a bug in the non-allocating ReceiveTexture()
+// https://github.com/leadedge/Spout2/issues/128#issuecomment-3368664300
+
 public class Receiver : OpenTKWindow, IDisposable
 {
     private SpoutReceiver receiver;

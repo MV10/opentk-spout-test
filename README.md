@@ -4,7 +4,7 @@ Wires up the basics of [Spout2](https://github.com/leadedge/Spout2) send / recei
 
 The project accepts a `sender` or `receiver` command line argument to run either mode. An optional second argument specifies the Spout name. If not provided, the default name is "test". If your name contains spaces, wrap it in quotes. There is also an `alloc` argument to create a receiver that uses an internally-allocated texture instead of the shared texture.
 
-> NOTE: Only send-mode is working at the moment.
+> NOTE: The non-allocating receiver is not working; the Spout2 maintainer indicated there is a bug with that call. The allocating receiver works fine, and the sender works.
 
 Send mode runs a simple plasma-color shader. Receive mode applies a ripple effect shader to the incoming texture. Use the Spout2 sample programs for testing (version info and link below).
 

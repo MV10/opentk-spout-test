@@ -2,7 +2,6 @@
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using Spout.Interop;
-using Spout.Interop.Spoututils;
 
 namespace test;
 
@@ -12,9 +11,10 @@ namespace test;
 
 public class AllocatingReceiver : OpenTKWindow, IDisposable
 {
+    private const bool INVERT = true;
+
     private SpoutReceiver receiver;
     private string name;
-    private int textureID = -1;
 
     public AllocatingReceiver(EyeCandyWindowConfig windowConfig, string spoutName)
         : base(windowConfig, "passthrough.vert", "receiver.frag")
@@ -29,9 +29,8 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
         receiver = new();
 
-        // Doesn't seem to work...
-        //SpoutUtils.OpenSpoutConsole();
-        //SpoutUtils.EnableLogs();
+        // writes to %AppData%\Spout (paste that into File Explorer)
+        //SpoutUtils.EnableSpoutLogFile("test.log", false);
 
         // Unnecessary?
         // https://github.com/leadedge/Spout2/issues/119#issuecomment-2574113975
@@ -40,15 +39,20 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        textureID = -1;
-        if (receiver.ReceiveTexture()) // should auto-connect
+        if (receiver.ReceiveTexture())
         {
-            // necessary to call before using the texture, would
-            // indicate size or sender changed, but if we use the
-            // shared texture directly, then we don't store that
             _ = receiver.IsUpdated;
 
-            textureID = (int)receiver.SharedTextureID;
+            int width = (int)receiver.SenderWidth;
+            int height = (int)receiver.SenderHeight;
+            if(width != OpenGLUtils.Width || height != OpenGLUtils.Height)
+            {
+                OpenGLUtils.Width = width;
+                OpenGLUtils.Height = height;
+                OpenGLUtils.Allocate();
+            }
+
+            receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, 0);
         }
 
         base.OnRenderFrame(e);
@@ -57,8 +61,8 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
     // called from OpenGLUtils.SetUniforms
     internal void SetTextureUniformCallback()
     {
-        if (textureID == -1) return;
-        Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
+        if (OpenGLUtils.TextureHandle == -1) return;
+        Shader.SetTexture("receivedTexture", OpenGLUtils.TextureHandle, TextureUnit.Texture0);
     }
 
     public new void Dispose()

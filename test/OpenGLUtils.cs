@@ -32,8 +32,8 @@ internal static class OpenGLUtils
     internal static Action SetTextureUniformCallback;
 
     // Only used by AllocatingReceiver
-    internal static int FramebufferHandle;
-    internal static int TextureHandle;
+    internal static int FramebufferHandle = -1;
+    internal static int TextureHandle = -1;
     internal static int Width;
     internal static int Height;
 
@@ -79,7 +79,9 @@ internal static class OpenGLUtils
         GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
     }
 
-    // Only used by AllocatingReceiver
+    //////////////////////////////////////////////////////////////////////
+    // Everything below only used by AllocatingReceiver
+
     internal static void Allocate()
     {
         FramebufferHandle = GL.GenFramebuffer();
@@ -97,8 +99,18 @@ internal static class OpenGLUtils
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, TextureHandle, 0);
     }
 
-    // Only used by AllocatingReceiver
-    internal static void Resize(int width, int height)
+    internal static void Deallocate()
     {
+        if (FramebufferHandle != -1)
+        {
+            GL.DeleteFramebuffer(FramebufferHandle);
+            FramebufferHandle = -1;
+        }
+
+        if (TextureHandle != -1)
+        {
+            GL.DeleteTexture(TextureHandle);
+            TextureHandle = -1;
+        }
     }
 }
