@@ -7,7 +7,6 @@ using Spout.Interop.Spoututils;
 namespace test;
 
 // This version of the receiver attempts to use the shared texture directly
-// https://github.com/leadedge/Spout2/issues/128
 
 // Lynn says there is a bug in the non-allocating ReceiveTexture()
 // https://github.com/leadedge/Spout2/issues/128#issuecomment-3368664300
@@ -31,15 +30,13 @@ public class Receiver : OpenTKWindow, IDisposable
         base.OnLoad();
 
         receiver = new();
+        if (!string.IsNullOrWhiteSpace(name)) receiver.SetActiveSender(name);
 
         //receiver.SetFrameCount(true);
 
         // writes to %AppData%\Spout (paste that into File Explorer)
         //SpoutUtils.EnableSpoutLogFile("test.log", false);
         
-        // Unnecessary
-        // https://github.com/leadedge/Spout2/issues/119#issuecomment-2574113975
-        //receiver.SetReceiverName(name);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)

@@ -7,8 +7,6 @@ namespace test;
 
 // This version of the receiver allocates its own texture instead of using the shared texture directly
 
-// Work in progress -- do not use yet
-
 public class AllocatingReceiver : OpenTKWindow, IDisposable
 {
     private const bool INVERT = true;
@@ -28,13 +26,10 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
         base.OnLoad();
 
         receiver = new();
+        if (!string.IsNullOrWhiteSpace(name)) Console.WriteLine(receiver.SetActiveSender(name));
 
         // writes to %AppData%\Spout (paste that into File Explorer)
         //SpoutUtils.EnableSpoutLogFile("test.log", false);
-
-        // Unnecessary?
-        // https://github.com/leadedge/Spout2/issues/119#issuecomment-2574113975
-        //receiver.SetReceiverName(name);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
