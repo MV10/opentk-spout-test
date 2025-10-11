@@ -29,24 +29,31 @@ public class Receiver : OpenTKWindow, IDisposable
     {
         base.OnLoad();
 
+        // writes to %AppData%\Spout (paste that into File Explorer)
+        SpoutUtils.EnableSpoutLogFile("test.log", false);
+        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
+
+        SpoutUtils.SpoutLogNotice("-------- receiver ctor");
         receiver = new();
         if (!string.IsNullOrWhiteSpace(name)) receiver.SetActiveSender(name);
-
-        //receiver.SetFrameCount(true);
-
-        // writes to %AppData%\Spout (paste that into File Explorer)
-        //SpoutUtils.EnableSpoutLogFile("test.log", false);
-        
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        textureID = -1;
-        if(receiver.ReceiveTexture()) // should auto-connect
+        SpoutUtils.SpoutLogNotice("-------- ReceiveTexture");
+        if (receiver.ReceiveTexture()) // should auto-connect
         {
-            // necessary to call before using the texture or size info etc
-            if (receiver.IsUpdated) textureID = (int)receiver.SharedTextureID;
-            //Console.WriteLine(receiver.SenderFrame);
+            SpoutUtils.SpoutLogNotice("-------- IsUpdated");
+            if (receiver.IsUpdated)
+            {
+                SpoutUtils.SpoutLogNotice("-------- SharedTextureID");
+                textureID = (int)receiver.SharedTextureID;
+            }
+            else
+            {
+                textureID = -1;
+            }
+            SpoutUtils.SpoutLogNotice($"-------- textureID {textureID}");
         }
 
         base.OnRenderFrame(e);
@@ -56,8 +63,10 @@ public class Receiver : OpenTKWindow, IDisposable
     internal void SetTextureUniformCallback()
     {
         if (textureID == -1) return;
+        SpoutUtils.SpoutLogNotice("-------- BindSharedTexture");
         receiver.BindSharedTexture();
         Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
+        SpoutUtils.SpoutLogNotice("-------- UnBindSharedTexture");
         _ = receiver.UnBindSharedTexture;
     }
 

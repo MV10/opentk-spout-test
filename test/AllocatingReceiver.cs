@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using Spout.Interop;
+using Spout.Interop.Spoututils;
 
 namespace test;
 
@@ -25,17 +26,22 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
     {
         base.OnLoad();
 
-        receiver = new();
-        if (!string.IsNullOrWhiteSpace(name)) Console.WriteLine(receiver.SetActiveSender(name));
-
         // writes to %AppData%\Spout (paste that into File Explorer)
-        //SpoutUtils.EnableSpoutLogFile("test.log", false);
+        SpoutUtils.EnableSpoutLogFile("test.log", false);
+        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
+
+        SpoutUtils.SpoutLogNotice("-------- receiver ctor (entering)");
+        receiver = new();
+        SpoutUtils.SpoutLogNotice("-------- receiver ctor (exited)");
+        //if (!string.IsNullOrWhiteSpace(name)) Console.WriteLine(receiver.SetActiveSender(name));
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
+        SpoutUtils.SpoutLogNotice("-------- ReceiveTexture()");
         if (receiver.ReceiveTexture())
         {
+            SpoutUtils.SpoutLogNotice("-------- IsUpdated");
             _ = receiver.IsUpdated;
 
             int width = (int)receiver.SenderWidth;
@@ -47,6 +53,7 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
                 OpenGLUtils.Allocate();
             }
 
+            SpoutUtils.SpoutLogNotice("-------- ReceiveTexture(tex, targ, inv, fbo)");
             receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, 0);
         }
 
