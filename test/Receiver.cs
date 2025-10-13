@@ -1,8 +1,8 @@
-﻿using eyecandy;
+﻿
+using eyecandy;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
-using Spout.Interop;
-using Spout.Interop.Spoututils;
+using SpoutInterop;
 
 namespace test;
 
@@ -31,7 +31,7 @@ public class Receiver : OpenTKWindow, IDisposable
 
         // writes to %AppData%\Spout (paste that into File Explorer)
         SpoutUtils.EnableSpoutLogFile("test.log", false);
-        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
+        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.Verbose);
 
         SpoutUtils.SpoutLogNotice("-------- receiver ctor");
         receiver = new();
@@ -44,10 +44,10 @@ public class Receiver : OpenTKWindow, IDisposable
         if (receiver.ReceiveTexture()) // should auto-connect
         {
             SpoutUtils.SpoutLogNotice("-------- IsUpdated");
-            if (receiver.IsUpdated)
+            if (receiver.IsUpdated())
             {
                 SpoutUtils.SpoutLogNotice("-------- SharedTextureID");
-                textureID = (int)receiver.SharedTextureID;
+                textureID = (int)receiver.GetSharedTextureID();
             }
             else
             {
@@ -67,7 +67,7 @@ public class Receiver : OpenTKWindow, IDisposable
         receiver.BindSharedTexture();
         Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
         SpoutUtils.SpoutLogNotice("-------- UnBindSharedTexture");
-        _ = receiver.UnBindSharedTexture;
+        _ = receiver.UnBindSharedTexture();
     }
 
     public new void Dispose()

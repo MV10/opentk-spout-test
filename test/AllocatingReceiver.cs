@@ -1,8 +1,8 @@
-﻿using eyecandy;
+﻿
+using eyecandy;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
-using Spout.Interop;
-using Spout.Interop.Spoututils;
+using SpoutInterop;
 
 namespace test;
 
@@ -28,7 +28,7 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
         // writes to %AppData%\Spout (paste that into File Explorer)
         SpoutUtils.EnableSpoutLogFile("test.log", false);
-        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
+        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.Verbose);
 
         SpoutUtils.SpoutLogNotice("-------- receiver ctor (entering)");
         receiver = new();
@@ -42,10 +42,10 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
         if (receiver.ReceiveTexture())
         {
             SpoutUtils.SpoutLogNotice("-------- IsUpdated");
-            _ = receiver.IsUpdated;
+            _ = receiver.IsUpdated();
 
-            int width = (int)receiver.SenderWidth;
-            int height = (int)receiver.SenderHeight;
+            int width = (int)receiver.GetWidth();
+            int height = (int)receiver.GetHeight();
             if(width != OpenGLUtils.Width || height != OpenGLUtils.Height)
             {
                 OpenGLUtils.Width = width;

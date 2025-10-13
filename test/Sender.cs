@@ -1,6 +1,7 @@
-﻿using eyecandy;
+﻿
+using eyecandy;
 using OpenTK.Windowing.Common;
-using Spout.Interop;
+using SpoutInterop;
 
 namespace test;
 

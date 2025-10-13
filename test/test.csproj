@@ -11,6 +11,7 @@
     <None Remove="passthrough.vert" />
     <None Remove="receiver.frag" />
     <None Remove="sender.frag" />
+    <None Remove="Spout.dll" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,11 +24,13 @@
     <Content Include="sender.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Spout.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="eyecandy" Version="4.2.0" />
-    <PackageReference Include="Spout.NETCore" Version="2.7.15" />
   </ItemGroup>
 
 </Project>
