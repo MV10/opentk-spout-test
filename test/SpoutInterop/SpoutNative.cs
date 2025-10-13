@@ -6,14 +6,13 @@ namespace SpoutInterop;
 
 public enum SpoutLogLevel
 {
-    None = 0,
-    Fatal,
-    Error,
-    Warning,
-    Notice,
-    Verbose,
-    Info,
-    Silent
+    SPOUT_LOG_SILENT = 0,
+    SPOUT_LOG_VERBOSE,
+    SPOUT_LOG_NOTICE,
+    SPOUT_LOG_WARNING,
+    SPOUT_LOG_ERROR,
+    SPOUT_LOG_FATAL,
+    SPOUT_LOG_NONE
 }
 
 public enum DXGI_FORMAT : uint

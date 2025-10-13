@@ -28,7 +28,7 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
         // writes to %AppData%\Spout (paste that into File Explorer)
         SpoutUtils.EnableSpoutLogFile("test.log", false);
-        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.Verbose);
+        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
 
         SpoutUtils.SpoutLogNotice("-------- receiver ctor (entering)");
         receiver = new();
