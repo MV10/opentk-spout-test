@@ -44,8 +44,8 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
             SpoutUtils.SpoutLogNotice("-------- IsUpdated");
             _ = receiver.IsUpdated();
 
-            int width = (int)receiver.GetWidth();
-            int height = (int)receiver.GetHeight();
+            int width = (int)receiver.GetSenderWidth();
+            int height = (int)receiver.GetSenderHeight();
             if(width != OpenGLUtils.Width || height != OpenGLUtils.Height)
             {
                 OpenGLUtils.Width = width;

@@ -1,517 +1,383 @@
-﻿using System.Runtime.InteropServices;
+﻿
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace SpoutInterop;
 
+[StructLayout(LayoutKind.Sequential)]
+public struct POINT
+{
+    public int X;
+    public int Y;
+}
+
 public static class SpoutUtils
 {
-    public static void CloseSpoutConsole(bool wait)
+    public static string GetSDKversion()
     {
-        SpoutNative.SpoutUtils.CloseSpoutConsole(wait);
+        StdString stdString = SpoutNative.spoututils_GetSDKversion();
+        string result = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
     }
 
-    public static bool CopyToClipBoard(IntPtr hwnd, string text)
+    public static string GetSpoutVersion()
     {
-        IntPtr textPtr = Marshal.StringToHGlobalAnsi(text);
-        try
-        {
-            return SpoutNative.SpoutUtils.CopyToClipBoard(hwnd, textPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(textPtr);
-        }
-    }
-
-    public static void DisableLogs()
-    {
-        SpoutNative.SpoutUtils.DisableLogs();
-    }
-
-    public static void DisableSpoutLog()
-    {
-        SpoutNative.SpoutUtils.DisableSpoutLog();
-    }
-
-    public static void DisableSpoutLogFile()
-    {
-        SpoutNative.SpoutUtils.DisableSpoutLogFile();
-    }
-
-    public static double ElapsedMicroseconds()
-    {
-        return SpoutNative.SpoutUtils.ElapsedMicroseconds();
-    }
-
-    public static void EnableLogs()
-    {
-        SpoutNative.SpoutUtils.EnableLogs();
-    }
-
-    public static void EnableSpoutLog(string file)
-    {
-        IntPtr filePtr = Marshal.StringToHGlobalAnsi(file);
-        try
-        {
-            SpoutNative.SpoutUtils.EnableSpoutLog(filePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(filePtr);
-        }
-    }
-
-    public static void EnableSpoutLogFile(string file, bool append)
-    {
-        IntPtr filePtr = Marshal.StringToHGlobalAnsi(file);
-        try
-        {
-            SpoutNative.SpoutUtils.EnableSpoutLogFile(filePtr, append);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(filePtr);
-        }
-    }
-
-    public static double EndTiming(bool b, bool c)
-    {
-        return SpoutNative.SpoutUtils.EndTiming(b, c);
-    }
-
-    public static bool FindSubKey(IntPtr hkey, string subkey)
-    {
-        IntPtr subkeyPtr = Marshal.StringToHGlobalAnsi(subkey);
-        try
-        {
-            return SpoutNative.SpoutUtils.FindSubKey(hkey, subkeyPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(subkeyPtr);
-        }
-    }
-
-    public static double GetCounter()
-    {
-        return SpoutNative.SpoutUtils.GetCounter();
-    }
-
-    public static IntPtr GetCurrentModule()
-    {
-        return SpoutNative.SpoutUtils.GetCurrentModule();
-    }
-
-    public static string GetExeName()
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            SpoutNative.SpoutUtils.GetExeName(strPtr);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
-    }
-
-    public static string GetExePath(bool b)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            SpoutNative.SpoutUtils.GetExePath(strPtr, b);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
-    }
-
-    public static string GetExeVersion(string path)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        IntPtr pathPtr = Marshal.StringToHGlobalAnsi(path);
-        try
-        {
-            SpoutNative.SpoutUtils.GetExeVersion(strPtr, pathPtr);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-            Marshal.FreeHGlobal(pathPtr);
-        }
-    }
-
-    public static double GetRefreshRate()
-    {
-        return SpoutNative.SpoutUtils.GetRefreshRate();
-    }
-
-    public static string GetSDKversion(out int version)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            version = 0;
-            SpoutNative.SpoutUtils.GetSDKversion(strPtr, ref version);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
-    }
-
-    public static string GetSpoutLog(string file)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        IntPtr filePtr = Marshal.StringToHGlobalAnsi(file);
-        try
-        {
-            SpoutNative.SpoutUtils.GetSpoutLog(strPtr, filePtr);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-            Marshal.FreeHGlobal(filePtr);
-        }
-    }
-
-    public static string GetSpoutLogPath()
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            SpoutNative.SpoutUtils.GetSpoutLogPath(strPtr);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
-    }
-
-    public static string GetSpoutVersion(out int version)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            version = 0;
-            SpoutNative.SpoutUtils.GetSpoutVersion(strPtr, ref version);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
+        StdString stdString = SpoutNative.spoututils_GetSpoutVersion();
+        string result = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
     }
 
     public static bool IsLaptop()
     {
-        return SpoutNative.SpoutUtils.IsLaptop();
+        return SpoutNative.spoututils_IsLaptop();
     }
 
-    public static bool LogFileEnabled()
+    public static IntPtr GetCurrentModule()
     {
-        return SpoutNative.SpoutUtils.LogFileEnabled();
+        return SpoutNative.spoututils_GetCurrentModule();
     }
 
-    public static bool LogsEnabled()
+    public static string GetExeVersion(string path)
     {
-        return SpoutNative.SpoutUtils.LogsEnabled();
+        StdString stdString = SpoutNative.spoututils_GetExeVersion(path);
+        string result = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
     }
 
-    public static void OpenSpoutConsole(string title)
+    public static string GetExePath()
     {
-        IntPtr titlePtr = Marshal.StringToHGlobalAnsi(title);
-        try
-        {
-            SpoutNative.SpoutUtils.OpenSpoutConsole(titlePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(titlePtr);
-        }
+        StdString stdString = SpoutNative.spoututils_GetExePath();
+        string result = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
     }
 
-    public static bool OpenSpoutLogs()
+    public static string GetExeName()
     {
-        return SpoutNative.SpoutUtils.OpenSpoutLogs();
+        StdString stdString = SpoutNative.spoututils_GetExeName();
+        string result = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
     }
 
-    public static bool ReadDwordFromRegistry(IntPtr hkey, string subkey, string value, out uint dword)
+    public static void RemovePath(ref string path)
     {
-        IntPtr subkeyPtr = Marshal.StringToHGlobalAnsi(subkey);
-        IntPtr valuePtr = Marshal.StringToHGlobalAnsi(value);
-        try
-        {
-            dword = 0;
-            return SpoutNative.SpoutUtils.ReadDwordFromRegistry(hkey, subkeyPtr, valuePtr, ref dword);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(subkeyPtr);
-            Marshal.FreeHGlobal(valuePtr);
-        }
+        StdString stdString = StringToStdString(path);
+        SpoutNative.spoututils_RemovePath(ref stdString);
+        path = StdStringToString(stdString);
+        FreeStdString(ref stdString);
     }
 
-    public static bool ReadPathFromRegistry(IntPtr hkey, string subkey, string value, out string path)
+    public static void RemoveName(ref string path)
     {
-        IntPtr subkeyPtr = Marshal.StringToHGlobalAnsi(subkey);
-        IntPtr valuePtr = Marshal.StringToHGlobalAnsi(value);
-        IntPtr pathPtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutUtils.ReadPathFromRegistry(hkey, subkeyPtr, valuePtr, pathPtr, 256);
-            path = success ? Marshal.PtrToStringAnsi(pathPtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(subkeyPtr);
-            Marshal.FreeHGlobal(valuePtr);
-            Marshal.FreeHGlobal(pathPtr);
-        }
+        StdString stdString = StringToStdString(path);
+        SpoutNative.spoututils_RemoveName(ref stdString);
+        path = StdStringToString(stdString);
+        FreeStdString(ref stdString);
     }
 
-    public static bool RemovePathFromRegistry(IntPtr hkey, string subkey, string value)
+    public static void OpenSpoutConsole()
     {
-        IntPtr subkeyPtr = Marshal.StringToHGlobalAnsi(subkey);
-        IntPtr valuePtr = Marshal.StringToHGlobalAnsi(value);
-        try
-        {
-            return SpoutNative.SpoutUtils.RemovePathFromRegistry(hkey, subkeyPtr, valuePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(subkeyPtr);
-            Marshal.FreeHGlobal(valuePtr);
-        }
+        SpoutNative.spoututils_OpenSpoutConsole();
     }
 
-    public static void RemoveSpoutLogFile(string file)
+    public static void CloseSpoutConsole(bool bWarning)
     {
-        IntPtr filePtr = Marshal.StringToHGlobalAnsi(file);
-        try
-        {
-            SpoutNative.SpoutUtils.RemoveSpoutLogFile(filePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(filePtr);
-        }
+        SpoutNative.spoututils_CloseSpoutConsole(bWarning);
     }
 
-    public static bool RemoveSubKey(IntPtr hkey, string subkey)
+    public static void EnableSpoutLog()
     {
-        IntPtr subkeyPtr = Marshal.StringToHGlobalAnsi(subkey);
-        try
-        {
-            return SpoutNative.SpoutUtils.RemoveSubKey(hkey, subkeyPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(subkeyPtr);
-        }
+        SpoutNative.spoututils_EnableSpoutLog();
+    }
+
+    public static void EnableSpoutLogFile(string filename, bool bAppend)
+    {
+        SpoutNative.spoututils_EnableSpoutLogFile(filename, bAppend);
+    }
+
+    public static void DisableSpoutLogFile()
+    {
+        SpoutNative.spoututils_DisableSpoutLogFile();
+    }
+
+    public static void DisableSpoutLog()
+    {
+        SpoutNative.spoututils_DisableSpoutLog();
     }
 
     public static void SetSpoutLogLevel(SpoutLogLevel level)
     {
-        SpoutNative.SpoutUtils.SetSpoutLogLevel(level);
-    }
-
-    public static void ShowSpoutLogs()
-    {
-        SpoutNative.SpoutUtils.ShowSpoutLogs();
+        SpoutNative.spoututils_SetSpoutLogLevel(level);
     }
 
     public static void SpoutLog(string format, params object[] args)
     {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
-        {
-            SpoutNative.SpoutUtils.SpoutLog(formatPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(formatPtr);
-        }
-    }
-
-    public static void SpoutLogError(string format, params object[] args)
-    {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
-        {
-            SpoutNative.SpoutUtils.SpoutLogError(formatPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(formatPtr);
-        }
-    }
-
-    public static void SpoutLogFatal(string format, params object[] args)
-    {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
-        {
-            SpoutNative.SpoutUtils.SpoutLogFatal(formatPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(formatPtr);
-        }
-    }
-
-    public static void SpoutLogNotice(string format, params object[] args)
-    {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
-        {
-            SpoutNative.SpoutUtils.SpoutLogNotice(formatPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(formatPtr);
-        }
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLog(message, __arglist());
     }
 
     public static void SpoutLogVerbose(string format, params object[] args)
     {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
-        {
-            SpoutNative.SpoutUtils.SpoutLogVerbose(formatPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(formatPtr);
-        }
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLogVerbose(message, __arglist());
+    }
+
+    public static void SpoutLogNotice(string format, params object[] args)
+    {
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLogNotice(message, __arglist());
     }
 
     public static void SpoutLogWarning(string format, params object[] args)
     {
-        IntPtr formatPtr = Marshal.StringToHGlobalAnsi(string.Format(format, args));
-        try
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLogWarning(message, __arglist());
+    }
+
+    public static void SpoutLogError(string format, params object[] args)
+    {
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLogError(message, __arglist());
+    }
+
+    public static void SpoutLogFatal(string format, params object[] args)
+    {
+        string message = string.Format(format, args);
+        SpoutNative.spoututils_SpoutLogFatal(message, __arglist());
+    }
+
+    public static int SpoutMessageBox(string message, uint dwMilliseconds)
+    {
+        return SpoutNative.spoututils_SpoutMessageBox(message, dwMilliseconds);
+    }
+
+    public static int SpoutMessageBox(string caption, string format, params object[] args)
+    {
+        string message = string.Format(format, args);
+        return SpoutNative.spoututils_SpoutMessageBox(caption, message, __arglist());
+    }
+
+    public static int SpoutMessageBox(string caption, uint uType, string format, params object[] args)
+    {
+        string message = string.Format(format, args);
+        return SpoutNative.spoututils_SpoutMessageBox(caption, uType, message, __arglist());
+    }
+
+    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint uType, uint dwMilliseconds)
+    {
+        return SpoutNative.spoututils_SpoutMessageBox(hwnd, message, caption, uType, dwMilliseconds);
+    }
+
+    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint uType, string instruction, uint dwMilliseconds)
+    {
+        return SpoutNative.spoututils_SpoutMessageBox(hwnd, message, caption, uType, instruction, dwMilliseconds);
+    }
+
+    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint uType, ref string text)
+    {
+        StdString stdString = StringToStdString(text);
+        int result = SpoutNative.spoututils_SpoutMessageBox(hwnd, message, caption, uType, ref stdString);
+        text = StdStringToString(stdString);
+        FreeStdString(ref stdString);
+        return result;
+    }
+
+    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint uType, StdVector items, ref int selected)
+    {
+        return SpoutNative.spoututils_SpoutMessageBox(hwnd, message, caption, uType, items, ref selected);
+    }
+
+    public static void SpoutMessageBoxIcon(IntPtr hIcon)
+    {
+        SpoutNative.spoututils_SpoutMessageBoxIcon(hIcon);
+    }
+
+    public static bool SpoutMessageBoxIcon(string iconfile)
+    {
+        StdString stdString = StringToStdString(iconfile);
+        bool result = SpoutNative.spoututils_SpoutMessageBoxIcon(stdString);
+        FreeStdString(ref stdString);
+        return result;
+    }
+
+    public static bool SpoutMessageBoxModeless(bool bMode)
+    {
+        return SpoutNative.spoututils_SpoutMessageBoxModeless(bMode);
+    }
+
+    public static void SpoutMessageBoxWindow(IntPtr hWnd)
+    {
+        SpoutNative.spoututils_SpoutMessageBoxWindow(hWnd);
+    }
+
+    public static void SpoutMessageBoxPosition(POINT pt)
+    {
+        SpoutNative.spoututils_SpoutMessageBoxPosition(pt);
+    }
+
+    public static bool CopyToClipBoard(IntPtr hwnd, string text)
+    {
+        return SpoutNative.spoututils_CopyToClipBoard(hwnd, text);
+    }
+
+    public static bool ReadDwordFromRegistry(IntPtr hKey, string subkey, string valuename, ref uint pValue)
+    {
+        return SpoutNative.spoututils_ReadDwordFromRegistry(hKey, subkey, valuename, ref pValue);
+    }
+
+    public static bool WriteDwordToRegistry(IntPtr hKey, string subkey, string valuename, uint dwValue)
+    {
+        return SpoutNative.spoututils_WriteDwordToRegistry(hKey, subkey, valuename, dwValue);
+    }
+
+    public static bool ReadPathFromRegistry(IntPtr hKey, string subkey, string valuename, StringBuilder filepath, uint dwSize)
+    {
+        return SpoutNative.spoututils_ReadPathFromRegistry(hKey, subkey, valuename, filepath, dwSize);
+    }
+
+    public static bool WritePathToRegistry(IntPtr hKey, string subkey, string valuename, string filepath)
+    {
+        return SpoutNative.spoututils_WritePathToRegistry(hKey, subkey, valuename, filepath);
+    }
+
+    public static bool WriteBinaryToRegistry(IntPtr hKey, string subkey, string valuename, IntPtr hexdata, uint nChars)
+    {
+        return SpoutNative.spoututils_WriteBinaryToRegistry(hKey, subkey, valuename, hexdata, nChars);
+    }
+
+    public static bool RemovePathFromRegistry(IntPtr hKey, string subkey, string valuename)
+    {
+        return SpoutNative.spoututils_RemovePathFromRegistry(hKey, subkey, valuename);
+    }
+
+    public static bool RemoveSubKey(IntPtr hKey, string subkey)
+    {
+        return SpoutNative.spoututils_RemoveSubKey(hKey, subkey);
+    }
+
+    public static bool FindSubKey(IntPtr hKey, string subkey)
+    {
+        return SpoutNative.spoututils_FindSubKey(hKey, subkey);
+    }
+
+    public static double ElapsedMicroseconds()
+    {
+        return SpoutNative.spoututils_ElapsedMicroseconds();
+    }
+
+    public static double GetRefreshRate()
+    {
+        return SpoutNative.spoututils_GetRefreshRate();
+    }
+
+    public static bool ExecuteProcess(string path, string commandline)
+    {
+        return SpoutNative.spoututils_ExecuteProcess(path, commandline);
+    }
+
+    public static bool OpenSpoutPanel(string message)
+    {
+        return SpoutNative.spoututils_OpenSpoutPanel(message);
+    }
+
+    private static string StdStringToString(StdString stdString)
+    {
+        if (stdString.Size <= 15) // SSO case
         {
-            SpoutNative.SpoutUtils.SpoutLogWarning(formatPtr, IntPtr.Zero);
+            return Encoding.ASCII.GetString(stdString.Buf, 0, (int)stdString.Size);
         }
-        finally
+        else // Heap-allocated case
         {
-            Marshal.FreeHGlobal(formatPtr);
+            // Pin Buf to get its memory address
+            GCHandle handle = GCHandle.Alloc(stdString.Buf, GCHandleType.Pinned);
+            try
+            {
+                // Read the pointer from the first 8 bytes of Buf
+                IntPtr stringPtr = Marshal.ReadIntPtr(handle.AddrOfPinnedObject());
+                if (stringPtr == IntPtr.Zero)
+                    return string.Empty;
+
+                byte[] buffer = new byte[stdString.Size];
+                Marshal.Copy(stringPtr, buffer, 0, (int)stdString.Size);
+                return Encoding.ASCII.GetString(buffer);
+            }
+            finally
+            {
+                handle.Free();
+            }
         }
     }
 
-    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint type, uint idHelp, uint language)
+    private static StdString StringToStdString(string value)
     {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(message);
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        try
+        StdString stdString = new StdString
         {
-            return SpoutNative.SpoutUtils.SpoutMessageBox1(hwnd, messagePtr, captionPtr, type, idHelp, language);
-        }
-        finally
+            Buf = new byte[16],
+            Size = 0,
+            Capacity = 15
+        };
+
+        if (string.IsNullOrEmpty(value))
         {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
+            return stdString;
         }
+
+        byte[] bytes = Encoding.ASCII.GetBytes(value);
+        stdString.Size = (ulong)bytes.Length;
+
+        if (bytes.Length <= 15) // SSO case
+        {
+            Array.Copy(bytes, stdString.Buf, bytes.Length);
+            stdString.Capacity = 15;
+        }
+        else // Heap-allocated case
+        {
+            IntPtr heapPtr = Marshal.AllocHGlobal(bytes.Length);
+            Marshal.Copy(bytes, 0, heapPtr, bytes.Length);
+            // Store the pointer in the first 8 bytes of Buf
+            GCHandle handle = GCHandle.Alloc(stdString.Buf, GCHandleType.Pinned);
+            try
+            {
+                Span<byte> bufSpan = new Span<byte>(stdString.Buf, 0, 8);
+                Span<IntPtr> ptrSpan = new Span<IntPtr>(new[] { heapPtr }, 0, 1);
+                MemoryMarshal.AsBytes(ptrSpan).CopyTo(bufSpan);
+            }
+            finally
+            {
+                handle.Free();
+            }
+            stdString.Capacity = (ulong)bytes.Length;
+        }
+
+        return stdString;
     }
 
-    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint type, ref string help)
+    private static void FreeStdString(ref StdString stdString)
     {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(message);
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        try
+        if (stdString.Size > 15)
         {
-            return SpoutNative.SpoutUtils.SpoutMessageBox2(hwnd, messagePtr, captionPtr, type, ref help);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
-        }
-    }
-
-    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint type, uint language)
-    {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(message);
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        try
-        {
-            return SpoutNative.SpoutUtils.SpoutMessageBox3(hwnd, messagePtr, captionPtr, type, language);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
-        }
-    }
-
-    public static int SpoutMessageBox(IntPtr hwnd, string message, string caption, uint type, List<string> vector, out int result)
-    {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(message);
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        // Note: Converting List<string> to native vector is complex and may require additional marshaling logic.
-        // For simplicity, assuming vector is handled by the native layer as a placeholder.
-        IntPtr vectorPtr = IntPtr.Zero; // Placeholder, actual implementation may vary.
-        try
-        {
-            result = 0;
-            return SpoutNative.SpoutUtils.SpoutMessageBox4(hwnd, messagePtr, captionPtr, type, vectorPtr, ref result);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
-        }
-    }
-
-    public static int SpoutMessageBox(string message, string caption, params object[] args)
-    {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(string.Format(message, args));
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        try
-        {
-            return SpoutNative.SpoutUtils.SpoutMessageBox5(messagePtr, captionPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
-        }
-    }
-
-    public static int SpoutMessageBox(string message, uint type, string caption, params object[] args)
-    {
-        IntPtr messagePtr = Marshal.StringToHGlobalAnsi(string.Format(message, args));
-        IntPtr captionPtr = Marshal.StringToHGlobalAnsi(caption);
-        try
-        {
-            return SpoutNative.SpoutUtils.SpoutMessageBox6(messagePtr, type, captionPtr, IntPtr.Zero);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(messagePtr);
-            Marshal.FreeHGlobal(captionPtr);
+            // Pin Buf to get its memory address
+            GCHandle handle = GCHandle.Alloc(stdString.Buf, GCHandleType.Pinned);
+            try
+            {
+                // Read the pointer from the first 8 bytes of Buf
+                IntPtr stringPtr = Marshal.ReadIntPtr(handle.AddrOfPinnedObject());
+                if (stringPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(stringPtr);
+                }
+            }
+            finally
+            {
+                handle.Free();
+            }
+            stdString.Buf = new byte[16];
+            stdString.Size = 0;
+            stdString.Capacity = 15;
         }
     }
 }

@@ -33,4 +33,8 @@
     <PackageReference Include="eyecandy" Version="4.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="SpoutInterop\GrokInputs\" />
+  </ItemGroup>
+
 </Project>

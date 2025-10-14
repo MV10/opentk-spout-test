@@ -1,5 +1,6 @@
 ﻿
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace SpoutInterop;
 
@@ -10,664 +11,277 @@ public class SpoutSender : IDisposable
 
     public SpoutSender()
     {
-        _nativePtr = SpoutNative.SpoutSender.ctor(Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>()));
-        if (_nativePtr == IntPtr.Zero)
-            throw new InvalidOperationException("Failed to create SpoutSender instance.");
+        _nativePtr = Marshal.AllocHGlobal(SpoutNative.SpoutSender_Size);
+        SpoutNative.SpoutSender_ctor(_nativePtr);
     }
 
     public SpoutSender(SpoutSender other)
     {
-        if (other == null || other._nativePtr == IntPtr.Zero)
-            throw new ArgumentNullException(nameof(other));
-        _nativePtr = SpoutNative.SpoutSender.ctor_copy(Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>()), other._nativePtr);
-        if (_nativePtr == IntPtr.Zero)
-            throw new InvalidOperationException("Failed to copy SpoutSender instance.");
+        if (other == null) throw new ArgumentNullException(nameof(other));
+        _nativePtr = Marshal.AllocHGlobal(SpoutNative.SpoutSender_Size);
+        SpoutNative.SpoutSender_copy_ctor(_nativePtr, other._nativePtr);
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
-        if (_nativePtr != IntPtr.Zero)
+        if (!_disposed)
         {
-            SpoutNative.SpoutSender.dtor(_nativePtr);
+            SpoutNative.SpoutSender_dtor(_nativePtr);
             Marshal.FreeHGlobal(_nativePtr);
             _nativePtr = IntPtr.Zero;
-        }
-        _disposed = true;
-    }
-
-    public SpoutSender Assign(SpoutSender other)
-    {
-        if (other == null || other._nativePtr == IntPtr.Zero)
-            throw new ArgumentNullException(nameof(other));
-        SpoutNative.SpoutSender.assign(_nativePtr, other._nativePtr);
-        return this;
-    }
-
-    public string AdapterName()
-    {
-        IntPtr ptr = SpoutNative.SpoutSender.AdapterName(_nativePtr);
-        return Std.GetString(ptr);
-    }
-
-    public bool BindSharedTexture()
-    {
-        return SpoutNative.SpoutSender.BindSharedTexture(_nativePtr);
-    }
-
-    public void CloseFrameSync()
-    {
-        SpoutNative.SpoutSender.CloseFrameSync(_nativePtr);
-    }
-
-    public bool CopyTexture(uint srcID, uint dstID, uint srcTarget, uint dstTarget, uint width, uint height, bool invert, uint hostFBO)
-    {
-        return SpoutNative.SpoutSender.CopyTexture(_nativePtr, srcID, dstID, srcTarget, dstTarget, width, height, invert, hostFBO);
-    }
-
-    public bool CreateMemoryBuffer(string name, int size)
-    {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.CreateMemoryBuffer(_nativePtr, namePtr, size);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
+            _disposed = true;
         }
     }
 
-    public bool CreateOpenGL()
+    ~SpoutSender()
     {
-        return SpoutNative.SpoutSender.CreateOpenGL(_nativePtr);
+        Dispose();
     }
 
-    public bool CreateSender(string name, uint width, uint height, uint format)
+    public void SetSenderName(string sendername = null)
     {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.CreateSender(_nativePtr, namePtr, width, height, format);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
+        SpoutNative.SpoutSender_SetSenderName(_nativePtr, sendername);
     }
 
-    public DXGI_FORMAT DX11format(int format)
+    public void SetSenderFormat(uint dwFormat)
     {
-        return SpoutNative.SpoutSender.DX11format(_nativePtr, format);
-    }
-
-    public bool DeleteMemoryBuffer()
-    {
-        return SpoutNative.SpoutSender.DeleteMemoryBuffer(_nativePtr);
-    }
-
-    public void DisableFrameCount()
-    {
-        SpoutNative.SpoutSender.DisableFrameCount(_nativePtr);
-    }
-
-    public void EnableFrameSync(bool enable)
-    {
-        SpoutNative.SpoutSender.EnableFrameSync(_nativePtr, enable);
-    }
-
-    public int GLDXformat(DXGI_FORMAT format)
-    {
-        return SpoutNative.SpoutSender.GLDXformat(_nativePtr, format);
-    }
-
-    public int GLformat(uint internalFormat, uint externalFormat)
-    {
-        return SpoutNative.SpoutSender.GLformat(_nativePtr, internalFormat, externalFormat);
-    }
-
-    public string GLformatName(int format)
-    {
-        IntPtr strPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>());
-        try
-        {
-            SpoutNative.SpoutSender.GLformatName(_nativePtr, strPtr, format);
-            string result = Std.GetString(strPtr);
-            Std.string_dtor(strPtr);
-            return result;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(strPtr);
-        }
-    }
-
-    public bool GetActiveSender(out string name)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetActiveSender(_nativePtr, namePtr);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public int GetAdapter()
-    {
-        return SpoutNative.SpoutSender.GetAdapter(_nativePtr);
-    }
-
-    public bool GetAdapterInfo(int index, out string name, out string description)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        IntPtr descPtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetAdapterInfo1(_nativePtr, index, namePtr, descPtr, 256);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            description = success ? Marshal.PtrToStringAnsi(descPtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-            Marshal.FreeHGlobal(descPtr);
-        }
-    }
-
-    public bool GetAdapterInfo(out string name, out string description)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        IntPtr descPtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetAdapterInfo2(_nativePtr, namePtr, descPtr, 256);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            description = success ? Marshal.PtrToStringAnsi(descPtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-            Marshal.FreeHGlobal(descPtr);
-        }
-    }
-
-    public bool GetAdapterName(int index, out string name)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetAdapterName(_nativePtr, index, namePtr, 256);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public bool GetAutoShare()
-    {
-        return SpoutNative.SpoutSender.GetAutoShare(_nativePtr);
-    }
-
-    public bool GetBufferMode()
-    {
-        return SpoutNative.SpoutSender.GetBufferMode(_nativePtr);
-    }
-
-    public int GetBuffers()
-    {
-        return SpoutNative.SpoutSender.GetBuffers(_nativePtr);
-    }
-
-    public bool GetCPU()
-    {
-        return SpoutNative.SpoutSender.GetCPU(_nativePtr);
-    }
-
-    public bool GetCPUmode()
-    {
-        return SpoutNative.SpoutSender.GetCPUmode(_nativePtr);
-    }
-
-    public bool GetCPUshare()
-    {
-        return SpoutNative.SpoutSender.GetCPUshare(_nativePtr);
-    }
-
-    public DXGI_FORMAT GetDX11format()
-    {
-        return SpoutNative.SpoutSender.GetDX11format(_nativePtr);
-    }
-
-    public bool GetDX9()
-    {
-        return SpoutNative.SpoutSender.GetDX9(_nativePtr);
-    }
-
-    public double GetFps()
-    {
-        return SpoutNative.SpoutSender.GetFps(_nativePtr);
-    }
-
-    public int GetFrame()
-    {
-        return SpoutNative.SpoutSender.GetFrame(_nativePtr);
-    }
-
-    public bool GetGLDX()
-    {
-        return SpoutNative.SpoutSender.GetGLDX(_nativePtr);
-    }
-
-    public IntPtr GetHandle()
-    {
-        return SpoutNative.SpoutSender.GetHandle(_nativePtr);
-    }
-
-    public uint GetHeight()
-    {
-        return SpoutNative.SpoutSender.GetHeight(_nativePtr);
-    }
-
-    public bool GetHostPath(string senderName, out string path)
-    {
-        IntPtr senderNamePtr = Marshal.StringToHGlobalAnsi(senderName);
-        IntPtr pathPtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetHostPath(_nativePtr, senderNamePtr, pathPtr, 256);
-            path = success ? Marshal.PtrToStringAnsi(pathPtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(senderNamePtr);
-            Marshal.FreeHGlobal(pathPtr);
-        }
-    }
-
-    public int GetMemoryBufferSize(string name)
-    {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.GetMemoryBufferSize(_nativePtr, namePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public bool GetMemoryShareMode()
-    {
-        return SpoutNative.SpoutSender.GetMemoryShareMode(_nativePtr);
-    }
-
-    public string GetName()
-    {
-        IntPtr ptr = SpoutNative.SpoutSender.GetName(_nativePtr);
-        return Marshal.PtrToStringAnsi(ptr);
-    }
-
-    public int GetNumAdapters()
-    {
-        return SpoutNative.SpoutSender.GetNumAdapters(_nativePtr);
-    }
-
-    public int GetPerformancePreference(string path)
-    {
-        IntPtr pathPtr = Marshal.StringToHGlobalAnsi(path);
-        try
-        {
-            return SpoutNative.SpoutSender.GetPerformancePreference(_nativePtr, pathPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(pathPtr);
-        }
-    }
-
-    public bool GetPreferredAdapterName(int index, out string name)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetPreferredAdapterName(_nativePtr, index, namePtr, 256);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public bool GetSender(int index, out string name)
-    {
-        IntPtr namePtr = Marshal.AllocHGlobal(256);
-        try
-        {
-            bool success = SpoutNative.SpoutSender.GetSender(_nativePtr, index, namePtr, 256);
-            name = success ? Marshal.PtrToStringAnsi(namePtr) : string.Empty;
-            return success;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public int GetSenderCount()
-    {
-        return SpoutNative.SpoutSender.GetSenderCount(_nativePtr);
-    }
-
-    public uint GetSenderFormat()
-    {
-        return SpoutNative.SpoutSender.GetSenderFormat(_nativePtr);
-    }
-
-    public double GetSenderFps()
-    {
-        return SpoutNative.SpoutSender.GetSenderFps(_nativePtr);
-    }
-
-    public int GetSenderFrame()
-    {
-        return SpoutNative.SpoutSender.GetSenderFrame(_nativePtr);
-    }
-
-    public bool GetSenderGLDX()
-    {
-        return SpoutNative.SpoutSender.GetSenderGLDX(_nativePtr);
-    }
-
-    public IntPtr GetSenderHandle()
-    {
-        return SpoutNative.SpoutSender.GetSenderHandle(_nativePtr);
-    }
-
-    public uint GetSenderHeight()
-    {
-        return SpoutNative.SpoutSender.GetSenderHeight(_nativePtr);
-    }
-
-    public bool GetSenderInfo(string name, out uint width, out uint height, out IntPtr handle, out uint format)
-    {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            width = 0;
-            height = 0;
-            handle = IntPtr.Zero;
-            format = 0;
-            return SpoutNative.SpoutSender.GetSenderInfo(_nativePtr, namePtr, ref width, ref height, ref handle, ref format);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public string GetSenderName()
-    {
-        IntPtr ptr = SpoutNative.SpoutSender.GetSenderName(_nativePtr);
-        return Marshal.PtrToStringAnsi(ptr);
-    }
-
-    public uint GetSharedTextureID()
-    {
-        return SpoutNative.SpoutSender.GetSharedTextureID(_nativePtr);
-    }
-
-    public int GetSpoutVersion()
-    {
-        return SpoutNative.SpoutSender.GetSpoutVersion(_nativePtr);
-    }
-
-    public int GetVerticalSync()
-    {
-        return SpoutNative.SpoutSender.GetVerticalSync(_nativePtr);
-    }
-
-    public void HoldFps(int fps)
-    {
-        SpoutNative.SpoutSender.HoldFps(_nativePtr, fps);
-    }
-
-    public bool IsApplicationPath(string path)
-    {
-        IntPtr pathPtr = Marshal.StringToHGlobalAnsi(path);
-        try
-        {
-            return SpoutNative.SpoutSender.IsApplicationPath(_nativePtr, pathPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(pathPtr);
-        }
-    }
-
-    public bool IsFrameCountEnabled()
-    {
-        return SpoutNative.SpoutSender.IsFrameCountEnabled(_nativePtr);
-    }
-
-    public bool IsFrameSyncEnabled()
-    {
-        return SpoutNative.SpoutSender.IsFrameSyncEnabled(_nativePtr);
-    }
-
-    public bool IsGLDXready()
-    {
-        return SpoutNative.SpoutSender.IsGLDXready(_nativePtr);
-    }
-
-    public bool IsPreferenceAvailable()
-    {
-        return SpoutNative.SpoutSender.IsPreferenceAvailable(_nativePtr);
-    }
-
-    public bool ReadTextureData(uint textureID, uint width, IntPtr pixels, uint stride, uint internalFormat, uint externalFormat, uint format, bool invert, uint hostFBO)
-    {
-        return SpoutNative.SpoutSender.ReadTextureData(_nativePtr, textureID, width, pixels, stride, internalFormat, externalFormat, format, invert, hostFBO);
+        SpoutNative.SpoutSender_SetSenderFormat(_nativePtr, dwFormat);
     }
 
     public void ReleaseSender()
     {
-        SpoutNative.SpoutSender.ReleaseSender(_nativePtr);
+        SpoutNative.SpoutSender_ReleaseSender(_nativePtr);
     }
 
-    public bool SendFbo(uint fboID, uint width, uint height, bool invert)
+    public bool SendFbo(uint FboID, uint fbowidth, uint fboheight, bool bInvert = true)
     {
-        return SpoutNative.SpoutSender.SendFbo(_nativePtr, fboID, width, height, invert);
+        return SpoutNative.SpoutSender_SendFbo(_nativePtr, FboID, fbowidth, fboheight, bInvert);
     }
 
-    public bool SendImage(IntPtr pixels, uint width, uint height, bool invert, uint glFormat)
+    public bool SendTexture(uint TextureID, uint TextureTarget, uint width, uint height, bool bInvert = true, uint HostFBO = 0)
     {
-        return SpoutNative.SpoutSender.SendImage(_nativePtr, pixels, width, height, invert, glFormat);
+        return SpoutNative.SpoutSender_SendTexture(_nativePtr, TextureID, TextureTarget, width, height, bInvert, HostFBO);
     }
 
-    public bool SendTexture(uint textureID, uint width, uint height, bool invert, uint hostFBO)
+    public bool SendImage(IntPtr pixels, uint width, uint height, uint glFormat = 0, bool bInvert = false, uint HostFBO = 0)
     {
-        return SpoutNative.SpoutSender.SendTexture(_nativePtr, textureID, width, height, invert, hostFBO);
+        return SpoutNative.SpoutSender_SendImage(_nativePtr, pixels, width, height, glFormat, bInvert, HostFBO);
     }
 
-    public bool SetActiveSender(string name)
+    public bool IsInitialized()
     {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.SetActiveSender(_nativePtr, namePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
+        return SpoutNative.SpoutSender_IsInitialized(_nativePtr);
     }
 
-    public void SetAutoShare(bool autoShare)
+    public string GetName()
     {
-        SpoutNative.SpoutSender.SetAutoShare(_nativePtr, autoShare);
+        IntPtr namePtr = SpoutNative.SpoutSender_GetName(_nativePtr);
+        return Marshal.PtrToStringAnsi(namePtr);
     }
 
-    public void SetBufferMode(bool bufferMode)
+    public uint GetWidth()
     {
-        SpoutNative.SpoutSender.SetBufferMode(_nativePtr, bufferMode);
+        return SpoutNative.SpoutSender_GetWidth(_nativePtr);
     }
 
-    public void SetBuffers(int buffers)
+    public uint GetHeight()
     {
-        SpoutNative.SpoutSender.SetBuffers(_nativePtr, buffers);
+        return SpoutNative.SpoutSender_GetHeight(_nativePtr);
     }
 
-    public bool SetCPUmode(bool cpu)
+    public double GetFps()
     {
-        return SpoutNative.SpoutSender.SetCPUmode(_nativePtr, cpu);
+        return SpoutNative.SpoutSender_GetFps(_nativePtr);
     }
 
-    public void SetCPUshare(bool cpu)
+    public long GetFrame()
     {
-        SpoutNative.SpoutSender.SetCPUshare(_nativePtr, cpu);
+        return SpoutNative.SpoutSender_GetFrame(_nativePtr);
     }
 
-    public void SetDX11format(DXGI_FORMAT format)
+    public IntPtr GetHandle()
     {
-        SpoutNative.SpoutSender.SetDX11format(_nativePtr, format);
+        return SpoutNative.SpoutSender_GetHandle(_nativePtr);
     }
 
-    public bool SetDX9(bool dx9)
+    public bool GetCPU()
     {
-        return SpoutNative.SpoutSender.SetDX9(_nativePtr, dx9);
+        return SpoutNative.SpoutSender_GetCPU(_nativePtr);
     }
 
-    public void SetFrameCount(bool enable)
+    public bool GetGLDX()
     {
-        SpoutNative.SpoutSender.SetFrameCount(_nativePtr, enable);
+        return SpoutNative.SpoutSender_GetGLDX(_nativePtr);
     }
 
-    public void SetFrameSync(string name)
+    public void SetFrameCount(bool bEnable)
     {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            SpoutNative.SpoutSender.SetFrameSync(_nativePtr, namePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
+        SpoutNative.SpoutSender_SetFrameCount(_nativePtr, bEnable);
     }
 
-    public void SetMaxSenders(int max)
+    public void DisableFrameCount()
     {
-        SpoutNative.SpoutSender.SetMaxSenders(_nativePtr, max);
+        SpoutNative.SpoutSender_DisableFrameCount(_nativePtr);
     }
 
-    public bool SetMemoryShareMode(bool memory)
+    public bool IsFrameCountEnabled()
     {
-        return SpoutNative.SpoutSender.SetMemoryShareMode(_nativePtr, memory);
+        return SpoutNative.SpoutSender_IsFrameCountEnabled(_nativePtr);
     }
 
-    public bool SetPerformancePreference(int preference, string path)
+    public void HoldFps(int fps)
     {
-        IntPtr pathPtr = Marshal.StringToHGlobalAnsi(path);
-        try
-        {
-            return SpoutNative.SpoutSender.SetPerformancePreference(_nativePtr, preference, pathPtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(pathPtr);
-        }
+        SpoutNative.SpoutSender_HoldFps(_nativePtr, fps);
     }
 
-    public bool SetPreferredAdapter(int index)
+    public void SetFrameSync(string name = null)
     {
-        return SpoutNative.SpoutSender.SetPreferredAdapter(_nativePtr, index);
+        SpoutNative.SpoutSender_SetFrameSync(_nativePtr, name);
     }
 
-    public void SetShareMode(int mode)
+    public bool WaitFrameSync(string SenderName, uint dwTimeout = 0)
     {
-        SpoutNative.SpoutSender.SetShareMode(_nativePtr, mode);
+        return SpoutNative.SpoutSender_WaitFrameSync(_nativePtr, SenderName, dwTimeout);
     }
 
-    public void SetSenderFormat(uint format)
+    public void EnableFrameSync(bool bSync = true)
     {
-        SpoutNative.SpoutSender.SetSenderFormat(_nativePtr, format);
+        SpoutNative.SpoutSender_EnableFrameSync(_nativePtr, bSync);
     }
 
-    public void SetSenderName(string name)
+    public void CloseFrameSync()
     {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            SpoutNative.SpoutSender.SetSenderName(_nativePtr, namePtr);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
+        SpoutNative.SpoutSender_CloseFrameSync(_nativePtr);
     }
 
-    public bool SetVerticalSync(int swapInterval)
+    public bool IsFrameSyncEnabled()
     {
-        return SpoutNative.SpoutSender.SetVerticalSync(_nativePtr, swapInterval);
+        return SpoutNative.SpoutSender_IsFrameSyncEnabled(_nativePtr);
+    }
+
+    public int GetNumAdapters()
+    {
+        return SpoutNative.SpoutSender_GetNumAdapters(_nativePtr);
+    }
+
+    public bool GetAdapterName(int index, StringBuilder adaptername, int maxchars = 256)
+    {
+        return SpoutNative.SpoutSender_GetAdapterName(_nativePtr, index, adaptername, maxchars);
+    }
+
+    public string AdapterName()
+    {
+        IntPtr namePtr = SpoutNative.SpoutSender_AdapterName(_nativePtr);
+        return Marshal.PtrToStringAnsi(namePtr);
+    }
+
+    public int GetAdapter()
+    {
+        return SpoutNative.SpoutSender_GetAdapter(_nativePtr);
+    }
+
+    public int GetSenderAdapter(string sendername, StringBuilder adaptername = null, int maxchars = 256)
+    {
+        return SpoutNative.SpoutSender_GetSenderAdapter(_nativePtr, sendername, adaptername, maxchars);
+    }
+
+    public bool GetAdapterInfo(StringBuilder description, StringBuilder output, int maxchars = 256)
+    {
+        return SpoutNative.SpoutSender_GetAdapterInfo(_nativePtr, description, output, maxchars);
+    }
+
+    public bool GetAdapterInfo(int index, StringBuilder description, StringBuilder output, int maxchars = 256)
+    {
+        return SpoutNative.SpoutSender_GetAdapterInfo(_nativePtr, index, description, output, maxchars);
+    }
+
+    public int GetPerformancePreference(string path = null)
+    {
+        return SpoutNative.SpoutSender_GetPerformancePreference(_nativePtr, path);
+    }
+
+    public bool SetPerformancePreference(int preference, string path = null)
+    {
+        return SpoutNative.SpoutSender_SetPerformancePreference(_nativePtr, preference, path);
+    }
+
+    public bool GetPreferredAdapterName(int preference, StringBuilder adaptername, int maxchars = 256)
+    {
+        return SpoutNative.SpoutSender_GetPreferredAdapterName(_nativePtr, preference, adaptername, maxchars);
+    }
+
+    public bool SetPreferredAdapter(int preference)
+    {
+        return SpoutNative.SpoutSender_SetPreferredAdapter(_nativePtr, preference);
+    }
+
+    public bool IsPreferenceAvailable()
+    {
+        return SpoutNative.SpoutSender_IsPreferenceAvailable(_nativePtr);
+    }
+
+    public bool IsApplicationPath(string path)
+    {
+        return SpoutNative.SpoutSender_IsApplicationPath(_nativePtr, path);
+    }
+
+    public bool FindNVIDIA(ref int nAdapter)
+    {
+        return SpoutNative.SpoutSender_FindNVIDIA(_nativePtr, ref nAdapter);
+    }
+
+    public bool GetAdapterInfo(StringBuilder renderadapter, StringBuilder renderdescription, StringBuilder renderversion, StringBuilder displaydescription, StringBuilder displayversion, int maxsize = 256)
+    {
+        return SpoutNative.SpoutSender_GetAdapterInfo(_nativePtr, renderadapter, renderdescription, renderversion, displaydescription, displayversion, maxsize);
+    }
+
+    public bool CreateSender(string Sendername, uint width = 0, uint height = 0, uint dwFormat = 0)
+    {
+        return SpoutNative.SpoutSender_CreateSender(_nativePtr, Sendername, width, height, dwFormat);
+    }
+
+    public bool UpdateSender(string Sendername, uint width, uint height)
+    {
+        return SpoutNative.SpoutSender_UpdateSender(_nativePtr, Sendername, width, height);
+    }
+
+    public bool DrawSharedTexture(float max_x = 1.0f, float max_y = 1.0f, float aspect = 1.0f, bool bInvert = true, uint HostFBO = 0)
+    {
+        return SpoutNative.SpoutSender_DrawSharedTexture(_nativePtr, max_x, max_y, aspect, bInvert, HostFBO);
+    }
+
+    public bool DrawToSharedTexture(uint TextureID, uint TextureTarget, uint width, uint height, float max_x = 1.0f, float max_y = 1.0f, float aspect = 1.0f, bool bInvert = false, uint HostFBO = 0)
+    {
+        return SpoutNative.SpoutSender_DrawToSharedTexture(_nativePtr, TextureID, TextureTarget, width, height, max_x, max_y, aspect, bInvert, HostFBO);
+    }
+
+    public bool BindSharedTexture()
+    {
+        return SpoutNative.SpoutSender_BindSharedTexture(_nativePtr);
+    }
+
+    public bool CopyTexture(uint srcTextureID, uint srcTextureTarget, uint dstTextureID, uint dstTextureTarget, uint width, uint height, bool bInvert = false, uint HostFBO = 0)
+    {
+        return SpoutNative.SpoutSender_CopyTexture(_nativePtr, srcTextureID, srcTextureTarget, dstTextureID, dstTextureTarget, width, height, bInvert, HostFBO);
+    }
+
+    public bool CreateMemoryBuffer(string name, int size)
+    {
+        return SpoutNative.SpoutSender_CreateMemoryBuffer(_nativePtr, name, size);
+    }
+
+    public uint DX11format(int format)
+    {
+        return SpoutNative.SpoutSender_DX11format(_nativePtr, format);
     }
 
     public bool UnBindSharedTexture()
     {
-        return SpoutNative.SpoutSender.UnBindSharedTexture(_nativePtr);
+        return SpoutNative.SpoutSender_UnBindSharedTexture(_nativePtr);
     }
 
-    public bool UpdateSender(string name, uint width, uint height)
+    public bool WriteMemoryBuffer(string name, IntPtr buffer, int size)
     {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.UpdateSender(_nativePtr, namePtr, width, height);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public bool WaitFrameSync(string name, uint timeout)
-    {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.WaitFrameSync(_nativePtr, namePtr, timeout);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
-    }
-
-    public bool WriteMemoryBuffer(string name, IntPtr data, int length)
-    {
-        IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-        try
-        {
-            return SpoutNative.SpoutSender.WriteMemoryBuffer(_nativePtr, namePtr, data, length);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(namePtr);
-        }
+        return SpoutNative.SpoutSender_WriteMemoryBuffer(_nativePtr, name, buffer, size);
     }
 }
-
-

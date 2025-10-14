@@ -1,0 +1,4451 @@
+---------------------------------------- 
+Spout.h 
+---------------------------------------- 
+/*
+
+					Spout.h
+
+	Documentation - https://spoutgl-site.netlify.app/					
+
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+
+#ifndef __Spout__
+#define __Spout__
+
+#include "SpoutGL.h"
+
+class SPOUT_DLLEXP Spout : public spoutGL {
+
+	public:
+
+	Spout();
+	~Spout();
+
+	//
+	// ===================== SENDER =========================
+	//
+
+	// Set name for sender creation
+	//   If no name is specified, the executable name is used  
+	void SetSenderName(const char* sendername = nullptr);
+	// Set sender DX11 shared texture format
+	void SetSenderFormat(DWORD dwFormat);
+	// Release sender and resources
+	void ReleaseSender();
+	// Send OpenGL framebuffer
+	//   The fbo must be bound for read.
+	//   The sending texture can be larger than the size that the sender is set up for
+	//   For example, if the application is using only a portion of the allocated texture space,  
+	//   such as for Freeframe plugins. (The 2.006 equivalent is DrawToSharedTexture)
+	//   To send the default OpenGL framebuffer, specify FboID = 0.
+	//   If width and height are also 0, the function determines the viewport size.
+	bool SendFbo(GLuint FboID, unsigned int width, unsigned int height, bool bInvert = true);
+	// Send OpenGL texture
+	bool SendTexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = true, GLuint HostFBO = 0);
+	// Send image pixels
+	bool SendImage(const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	// Sender status
+	bool IsInitialized();
+	// Sender name
+	const char * GetName();
+	// Sender width
+	unsigned int GetWidth();
+	// Sender height
+	unsigned int GetHeight();
+	// Sender frame rate
+	double GetFps();
+	// Sender frame number
+	long GetFrame();
+	// Sender share handle
+	HANDLE GetHandle();
+	// Sender sharing method
+	bool GetCPU();
+	// Sender GL/DX hardware compatibility
+	bool GetGLDX();
+
+	//
+	// ====================== RECEIVER ===========================
+	//
+
+	// Specify sender for connection
+	//   If a name is specified, the receiver will not connect to any other unless the user selects one
+	//   If that sender closes, the receiver will wait for the nominated sender to open 
+	//   If no name is specified, the receiver will connect to the active sender
+	void SetReceiverName(const char * sendername = nullptr);
+	// Get sender for connection
+	bool GetReceiverName(char* sendername, int maxchars = 256);
+	// Close receiver and release resources ready to connect to another sender
+	void ReleaseReceiver();
+	// Receive shared texture
+	//   Connect to a sender and retrieve texture details ready for access
+	//	 (see BindSharedTexture and UnBindSharedTexture)
+	bool ReceiveTexture();
+	// Receive OpenGL texture
+	// 	 Connect to a sender and inform the application to update
+	//   the receiving texture if it has changed dimensions
+	//   For no change, copy the sender shared texture to the application texture
+	//   The texture must be RGBA of dimension (width * height) 
+	bool ReceiveTexture(GLuint TextureID, GLuint TextureTarget, bool bInvert = false, GLuint HostFbo = 0);
+	// Receive image pixels
+	//   Connect to a sender and inform the application to update
+	//   the receiving buffer if it has changed dimensions
+	//   For no change, copy the sender shared texture to the pixel buffer
+	//   The receiving image can be RGBA, BGRA, RGB or BGR formats of dimension (width * height) 
+	bool ReceiveImage(unsigned char* pixels, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFbo = 0);
+	// Query whether the sender has changed
+	//   Checked at every cycle before receiving data
+	bool IsUpdated();
+	// Query sender connection
+	//   If the sender closes, receiving functions return false  
+	bool IsConnected();
+	// Query received frame status
+	//   The receiving texture or pixel buffer is only refreshed if the sender has produced a new frame  
+	//   This can be queried to process texture data only for new frames
+	bool IsFrameNew();
+	// Received sender name
+	const char * GetSenderName();
+	// Received sender width
+	unsigned int GetSenderWidth();
+	// Received sender height
+	unsigned int GetSenderHeight();
+	// Received sender DX11 texture format
+	DWORD GetSenderFormat();
+	// Received sender frame rate
+	double GetSenderFps();
+	// Received sender frame number
+	long GetSenderFrame();
+	// Received sender share handle
+	HANDLE GetSenderHandle();
+	// Received sender texture
+	ID3D11Texture2D* GetSenderTexture();
+	// Received sender sharing method
+	bool GetSenderCPU();
+	// Received sender GL/DX hardware compatibility
+	bool GetSenderGLDX();
+	// Return a list of current senders
+	std::vector<std::string> GetSenderList();
+	// Sender index into the set of names
+	int GetSenderIndex(const char* sendername);
+	// Open sender selection dialog
+	bool SelectSender(HWND hwnd = NULL);
+
+	//
+	// Frame count
+	//
+
+	// Enable or disable frame counting globally
+	void SetFrameCount(bool bEnable);
+	// Disable frame counting specifically for this application
+	void DisableFrameCount();
+	// Return frame count status
+	bool IsFrameCountEnabled();
+	// Frame rate control
+	void HoldFps(int fps);
+	// Signal sync event 
+	void SetFrameSync(const char* name = nullptr);
+	// Wait or test for a sync event
+	bool WaitFrameSync(const char *SenderName, DWORD dwTimeout = 0);
+	// Enable / disable frame sync
+	void EnableFrameSync(bool bSync = true);
+	// Close frame sync
+	void CloseFrameSync();
+	// Check for frame sync option
+	bool IsFrameSyncEnabled();
+
+	//
+	// Sender names
+	//
+
+	// Number of senders
+	int GetSenderCount();
+	// Sender item name
+	bool GetSender(int index, char* sendername, int MaxSize = 256);
+	// Sender information
+	bool GetSenderInfo(const char* sendername, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle, DWORD &dwFormat);
+	// Current active sender
+	bool GetActiveSender(char* sendername);
+	// Set sender as active
+	bool SetActiveSender(const char* sendername);
+
+	//
+	// Adapter functions
+	//
+
+	// The number of graphics adapters in the system
+	int GetNumAdapters();
+	// Get adapter item name
+	bool GetAdapterName(int index, char *adaptername, int maxchars = 256);
+	// Return current adapter name
+	char * AdapterName();
+	// Get current adapter index
+	int GetAdapter();
+	// Get sender adapter index and name for a given sender
+	int GetSenderAdapter(const char* sendername, char* adaptername = nullptr, int maxchars = 256);
+	// Get the description and output display name of the current adapter
+	bool GetAdapterInfo(char* description, char* output, int maxchars);
+	// Get the description and output display name for a given adapter
+	bool GetAdapterInfo(int index, char* description, char* output, int maxchars);
+
+	//
+	// Graphics preference
+	// Windows 10 Vers 1803, build 17134 or later
+	//
+
+	// Get the Windows graphics preference for an application
+	int GetPerformancePreference(const char* path = nullptr);
+	// Set the Windows graphics preference for an application
+	bool SetPerformancePreference(int preference, const char* path = nullptr);
+	// Get the graphics adapter name for a Windows preference
+	bool GetPreferredAdapterName(int preference, char* adaptername, int maxchars);
+	// Set graphics adapter index for a Windows preference
+	bool SetPreferredAdapter(int preference);
+	// Availability of Windows graphics preference
+	bool IsPreferenceAvailable();
+	// Is the path a valid application
+	bool IsApplicationPath(const char* path);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Find the index of the NVIDIA adapter in a multi-adapter system
+	bool FindNVIDIA(int &nAdapter);
+	// Graphics adapter details
+	bool GetAdapterInfo(char* renderadapter,
+		char* renderdescription, char* renderversion,
+		char* displaydescription, char* displayversion,
+		int maxsize);
+
+	// Create a sender
+	bool CreateSender(const char *Sendername, unsigned int width = 0, unsigned int height = 0, DWORD dwFormat = 0);
+	// Update a sender
+	bool UpdateSender(const char* Sendername, unsigned int width, unsigned int height);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Create receiver connection
+	bool CreateReceiver(char* Sendername, unsigned int &width, unsigned int &height);
+	// Check receiver connection
+	bool CheckReceiver(char* Sendername, unsigned int &width, unsigned int &height, bool &bConnected);
+	// Receive OpenGL texture
+	bool ReceiveTexture(char* Sendername, unsigned int &width, unsigned int &height, GLuint TextureID = 0, GLuint TextureTarget = 0, bool bInvert = false, GLuint HostFBO = 0);
+	// Receive image pixels
+	bool ReceiveImage(char* Sendername, unsigned int &width, unsigned int &height, unsigned char* pixels, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	// Open dialog for the user to select a sender
+	//   Optional message argument
+	bool SelectSenderPanel(const char* message = nullptr);
+	// Receiver detect sender selection
+	bool CheckSpoutPanel(char *sendername, int maxchars = 256);
+
+	// Legacy OpenGL Draw functions
+	// See _SpoutCommon.h_ #define legacyOpenGL
+#ifdef legacyOpenGL
+	// Render the shared texture
+	bool DrawSharedTexture(float max_x = 1.0, float max_y = 1.0, float aspect = 1.0, bool bInvert = true, GLuint HostFBO = 0);
+	// Render a texture to the shared texture. 
+	bool DrawToSharedTexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, float max_x = 1.0, float max_y = 1.0, float aspect = 1.0, bool bInvert = false, GLuint HostFBO = 0);
+#endif // #endif legacyOpenGL
+
+protected:
+
+	// Sender creation and change
+	bool CheckSender(unsigned int width, unsigned int height);
+	// Create receiver connection
+	void InitReceiver(const char * sendername, unsigned int width, unsigned int height, DWORD dwFormat);
+	// Receiver find sender and retrieve information
+	bool ReceiveSenderData();
+
+	//
+	// Class globals
+	//
+
+	// Graphics adapter name
+	char m_AdapterName[256];
+	bool m_bAdapt; // Receiver adapt to the sender adapter
+
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutCommon.h 
+---------------------------------------- 
+//
+// Header: SpoutCommon.h
+//
+// Enables build of the SDK as a DLL.
+//
+// Includes header for common utilities namespace "SpoutUtils".
+//
+// Optional _#define legacyOpenGL_ to enable legacy draw functions
+//
+
+/*
+		Thanks and credit to Malcolm Bechard, the author of this file
+		https://github.com/mbechard
+
+		Copyright (c) 2014-2024, Lynn Jarvis. All rights reserved.
+
+		Redistribution and use in source and binary forms, with or without modification, 
+		are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+		EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+		IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+		PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+		INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+		LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+03.07.23	- Remove _MSC_VER condition from SPOUT_DLLEXP define
+			  (#PR93  Fix MinGW error (beta branch)
+07.12.23	- using namespace spoututils moved from SpoutGL.h
+
+
+*/
+
+#pragma once
+
+#ifndef __SpoutCommon__
+#define __SpoutCommon__
+
+//
+// To build the Spout library as a dll, define
+// SPOUT_BUILD_DLL in the preprocessor defines.
+// Properties > C++ > Preprocessor > Preprocessor Definitions
+//
+#ifndef SPOUT_DLLEXP
+	#if defined(SPOUT_BUILD_DLL)
+	#define SPOUT_DLLEXP	__declspec(dllexport)
+	#elif defined(SPOUT_IMPORT_DLL)
+	#define SPOUT_DLLEXP	__declspec(dllimport)
+	#else
+	#define SPOUT_DLLEXP
+	#endif
+#endif
+
+// Common utility functions namespace
+#include "SpoutUtils.h"
+
+//
+// This definition enables legacy OpenGL rendering code
+// used for shared texture Draw functions in SpoutGLDXinterop.cpp
+// Not required unless compatibility with OpenGL < 3 is necessary
+// Disabled by default for OpenGL 4 compliance
+// * Note that the same definition is necessary in SpoutGLextensions.h
+//   so that SpoutGLextensions can be used independently of the Spout library.
+//
+// #define legacyOpenGL
+//
+
+//
+// Visual Studio code analysis warnings
+//
+
+// C++11 scoped (class) enums are not compatible with early compilers (< VS2012 and others).
+// The warning is designated "Prefer" and "C" standard unscoped enums are retained for compatibility.
+#if defined(_MSC_VER)
+#pragma warning(disable:26812) // unscoped enums
+#endif
+
+//
+// For ARM build
+// __movsd intrinsic not defined
+//
+#if defined _M_ARM64
+#include <memory.h>
+inline void __movsd(unsigned long* Destination,
+	const unsigned long* Source, size_t Count)
+{
+	memcpy(Destination, Source, Count);
+}
+#endif
+
+
+#endif
+ 
+---------------------------------------- 
+SpoutCopy.h 
+---------------------------------------- 
+/*
+
+					SpoutCopy.h
+
+		Functions to manage pixel buffer copying
+
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+	Copyright (c) 2016-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+#ifndef __spoutCopy__ // standard way as well
+#define __spoutCopy__
+
+#include "SpoutCommon.h"
+#include <windows.h>
+#include <stdio.h> // for debug printf
+#include <GL/gl.h> // For OpenGL definitions
+#include <intrin.h> // for cpuid to test for SSE2
+
+#ifdef _M_ARM64
+#include <sse2neon.h> // for NEON
+#else
+#include <emmintrin.h> // for SSE2
+#include <tmmintrin.h> // for SSSE3
+#endif
+#include <cmath> // For compatibility with Clang. PR#81
+#include <stdint.h> // for _uint32 etc
+
+// For save texture to bitmap testing function
+#include <d3d11.h>
+#include <fstream>
+#include <vector>
+
+class SPOUT_DLLEXP spoutCopy {
+
+	public:
+
+		spoutCopy();
+		~spoutCopy();
+
+		// Copy image pixels and select fastest method based on image width
+		void CopyPixels(const unsigned char *src, unsigned char *dst,
+						unsigned int width, unsigned int height, 
+						GLenum glFormat = GL_RGBA, bool bInvert = false) const;
+
+		// Flip a pixel buffer from source to destiination
+		void FlipBuffer(const unsigned char *src, unsigned char *dst,
+						unsigned int width, unsigned int height,
+						GLenum glFormat = GL_RGBA) const;
+
+		// Flip a pixel buffer in place
+		void FlipBuffer(unsigned char* src,
+			unsigned int width, unsigned int height,
+			GLenum glFormat = GL_RGBA) const;
+
+		// Correct for image stride
+		void RemovePadding(const unsigned char* source, unsigned char* dest,
+			unsigned int width, unsigned int height,
+			unsigned int source_stride, GLenum glFormat) const;
+
+		// Clear alpha of rgba image pixels to the required value
+		void ClearAlpha(unsigned char* src,	unsigned int width,
+			unsigned int height, unsigned char alpha) const;
+
+		// SSE2 version of memcpy
+		void memcpy_sse2(void* dst, const void* src, size_t size) const;
+
+		//
+		// RGBA <> RGBA
+		//
+
+		// Copy rgba buffers line by line allowing for source pitch using the fastest method
+		void rgba2rgba(const void* source, void* dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch, bool bInvert = false) const;
+
+		// Copy rgba buffers line by line allowing for source and destination line pitch
+		void rgba2rgba(const void* source, void* dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch, unsigned int destPitch, bool bInvert) const;
+
+		// Copy rgba buffers of differing size
+		void rgba2rgbaResample(const void* source, void* dest,
+			unsigned int sourceWidth, unsigned int sourceHeight, unsigned int sourcePitch,
+			unsigned int destWidth, unsigned int destHeight, bool bInvert = false) const;
+
+		//
+		// RGBA <> BGRA
+		//
+
+		// Copy rgba to bgra using the fastest method
+		void rgba2bgra(const void* rgba_source, void* bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+
+		// Copy rgba to bgra line by line allowing for source pitch using the fastest method
+		void rgba2bgra(const void* rgba_source, void* bgra_dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch, bool bInvert = false) const;
+
+		// Copy rgba to bgra line allowing for source and destination line pitch
+		void rgba2bgra(const void* source, void* dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch, unsigned int destPitch, bool bInvert) const;
+		
+		// Copy bgra to rgba
+		void bgra2rgba(const void* bgra_source, void *rgba_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+
+		//
+		// RGBA <> RGB, RGBA <> BGR
+		//
+
+		// TODO : add RGBA pitch to all functions
+		// TODO : avoid redundancy
+
+		// Copy RGBA to RGB or BGR allowing for source line pitch using the fastest method
+		void rgba2rgb (const void* rgba_source, void* rgb_dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch,    // byte line pitch
+			bool bInvert = false,        // Flip vertically
+			bool bMirror = false,        // Mirror horizontally
+			bool bSwapRB = false) const; // swap red and blue (rgb > bgr) const;
+
+		// Copy RGBA to BGR allowing for source line pitch
+		void rgba2bgr(const void* rgba_source, void* rgb_dest, unsigned int width, unsigned int height,
+			unsigned int sourcePitch, bool bInvert = false) const;
+
+		// Copy RGBA to RGB allowing for source and destination pitch
+		void rgba2rgbResample(const void* source, void* dest,
+			unsigned int sourceWidth, unsigned int sourceHeight, unsigned int sourcePitch,
+			unsigned int destWidth, unsigned int destHeight,
+			bool bInvert = false, bool bMirror = false, bool bSwapRB = false) const;
+
+		// Copy RGBA to BGR allowing for source and destination pitch
+		void rgba2bgrResample(const void* source, void* dest,
+			unsigned int sourceWidth, unsigned int sourceHeight, unsigned int sourcePitch,
+			unsigned int destWidth, unsigned int destHeight, bool bInvert = false) const;
+
+		//
+		// SSE3 function
+		//
+		// RGBA to RGB/BGR with source line pitch 
+		//
+		void rgba_to_rgb_sse3(const void* rgba_source, void* rgb_dest,
+			unsigned int width, unsigned int height,
+			unsigned int rgba_pitch, // line byte pitch
+			bool bInvert = false, // Flip image
+			bool bSwapRB = false) const; // Swap RG (BGR)
+
+		//
+		// Byte functions
+		//
+
+		// Copy RGB to RGBA 
+		void rgb2rgba (const void* rgb_source,  void *rgba_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		
+		// Copy RGB to RGBA allowing for destination pitch
+		void rgb2rgba(const void *rgb_source, void *rgba_dest,
+			unsigned int width, unsigned int height,
+			unsigned int dest_pitch, bool bInvert) const;
+
+		// Copy BGR to RGBA
+		void bgr2rgba (const void* bgr_source,  void *rgba_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		
+		// Copy BGR to RGBA allowing for destination pitch
+		void bgr2rgba(const void *rgb_source, void *rgba_dest,
+			unsigned int width, unsigned int height,
+			unsigned int dest_pitch, bool bInvert) const;
+
+		//
+		// RGB > BGRA
+		//
+
+		// Copy RGB to BGRA
+		void rgb2bgra (const void* rgb_source,  void *bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		
+		// Copy RGB to BGRA allowing for destination pitch
+		void rgb2bgra(const void *rgb_source, void *bgra_dest,
+			unsigned int width, unsigned int height,
+			unsigned int dest_pitch, bool bInvert) const;
+
+		// Experimental SSE RGB to BGRA
+		// Single line
+		void rgb_to_bgrx_sse(unsigned int npixels, const void* rgb_source, void* bgrx_out) const;
+		// Full height
+		void rgb_to_bgra_sse3(void* rgb_source, void* rgba_dest, unsigned int width, unsigned int height) const;
+
+		// Copy BGR to BGRA
+		void bgr2bgra (const void* bgr_source,  void *bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+	
+		// Copy RGBA to BGR
+		void rgba2bgr (const void* rgba_source, void *bgr_dest,  unsigned int width, unsigned int height, bool bInvert = false) const;
+		
+		// Copy BGRA to RGB
+		void bgra2rgb (const void* bgra_source, void *rgb_dest,  unsigned int width, unsigned int height, bool bInvert = false) const;
+		
+		// Copy BGRA to BGR
+		void bgra2bgr (const void* bgra_source, void *bgr_dest,  unsigned int width, unsigned int height, bool bInvert = false) const;
+
+		// SSE capability
+		void GetSSE(bool &bSSE2, bool &bSSE3, bool &bSSSE3);
+		bool GetSSE2();
+		bool GetSSE3();
+		bool GetSSSE3();
+
+		// Save texture to file for testing
+		bool SaveTextureToBMP(ID3D11DeviceContext* context, ID3D11Texture2D* texture, std::string filePath);
+
+	protected :
+
+		void CheckSSE();
+		bool m_bSSE2 = false;
+		bool m_bSSE3 = false;
+		bool m_bSSSE3 = false;
+
+		void rgba_bgra(const void *rgba_source, void *bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		void rgba_bgra_sse2(const void *rgba_source, void *bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		void rgba_bgra_sse3(const void *rgba_source, void *bgra_dest, unsigned int width, unsigned int height, bool bInvert = false) const;
+		// Swap red and blue components in place
+		void rgba_swap_ssse3(void* __restrict rgbasource, unsigned int width, unsigned int height);
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutDirectX.h 
+---------------------------------------- 
+/*
+
+	spoutDirectX.h
+
+	Functions to manage DirectX 11 texture sharing
+
+	Copyright (c) 2014 - 2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+#ifndef __spoutDirectX__ 
+#define __spoutDirectX__
+
+#include "SpoutCommon.h"
+
+#include <d3d9.h> // For format definitions
+#include <d3d11.h>
+#include <d3d11_1.h>
+#include <ntverp.h>
+
+//
+// Windows graphics preferences are available for Windows 10 Vers 1803
+// build 17134 or later, and use dxgi1_6.
+//
+// If existing Visual Studio projects use Microsoft DirectX SDK (June 2010),
+// this will conflict because the older SDK will be included first.
+// The include order in the project file should be changed to include the older SDK last.
+// Change :
+//    <IncludePath>$(DXSDK_DIR)Include$(IncludePath);</IncludePath>
+//    <LibraryPath>$(DXSDK_DIR)Lib\x86$(LibraryPath);</LibraryPath>
+// To :
+//    <IncludePath>$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
+//    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib\x86</LibraryPath>
+//
+#ifdef NTDDI_WIN10_RS4
+#include <dxgi1_6.h> // for adapter performance preference
+#endif
+
+#pragma comment (lib, "d3d11.lib")// the Direct3D 11 Library file
+#pragma comment (lib, "dxgi.lib") // for CreateDXGIFactory1
+
+
+using namespace spoututils;
+
+class SPOUT_DLLEXP spoutDirectX {
+
+	public:
+
+		spoutDirectX();
+		~spoutDirectX();
+
+		//
+		// DirectX11 device
+		//
+
+		// Initialize and prepare DirectX 11
+		bool OpenDirectX11(ID3D11Device* pDevice = nullptr);
+		// Release DirectX 11 device and context
+		void CloseDirectX11();
+		// Set the DirectX11 device
+		bool SetDX11Device(ID3D11Device* pDevice);
+		// Create a DirectX11 device
+		ID3D11Device* CreateDX11device();
+		// Return the class device
+		ID3D11Device* GetDX11Device();
+		// Return the device immediate context
+		ID3D11DeviceContext* GetDX11Context();
+		// Return the device feature level
+		D3D_FEATURE_LEVEL GetDX11FeatureLevel();
+
+		//
+		// DirectX11 texture
+		//
+
+		// Create a DirectX11 shared texture
+		bool CreateSharedDX11Texture(ID3D11Device* pDevice,
+			unsigned int width, unsigned int height, DXGI_FORMAT format,
+			ID3D11Texture2D** ppSharedTexture, HANDLE &dxShareHandle,
+			bool bKeyed = false, bool bNThandle = false);
+		// Create a DirectX texture which is not shared
+		bool CreateDX11Texture(ID3D11Device* pDevice, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** ppTexture);
+		// Create a DirectX texture with specific bind and misc flags 
+		bool CreateDX11Texture(ID3D11Device* pDevice, unsigned int width, unsigned int height,
+			DXGI_FORMAT format, UINT bindFlags, UINT miscFlags, ID3D11Texture2D** ppTexture);
+		// Create a DirectX 11 staging texture for read and write
+		bool CreateDX11StagingTexture(ID3D11Device* pDevice, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** pStagingTexture);
+		// Retrieve the pointer of a DirectX11 shared texture
+		bool OpenDX11shareHandle(ID3D11Device* pDevice, ID3D11Texture2D** ppSharedTexture, HANDLE dxShareHandle);
+
+		//
+		// DirectX11 utilities
+		//
+
+		// Release a texture resource created with a class device
+		unsigned long ReleaseDX11Texture(ID3D11Texture2D* pTexture);
+		// Release a texture resource
+		unsigned long ReleaseDX11Texture(ID3D11Device* pd3dDevice, ID3D11Texture2D* pTexture);
+		// Release a device
+		unsigned long ReleaseDX11Device(ID3D11Device* pd3dDevice);
+		// Flush immediate context command queue
+		void Flush();
+		// Flush immediate context command queue and wait for completion
+		void FlushWait(ID3D11Device* pd3dDevice = nullptr, ID3D11DeviceContext* pImmediateContext = nullptr);
+		// Wait for completion after flush
+		void Wait(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
+
+		//
+		// Graphics adapter
+		//
+
+		// Get the number of graphics adapters in the system
+		int GetNumAdapters();
+		// Get the name of an adapter index
+		bool GetAdapterName(int index, char* adaptername, int maxchars);
+		// Get the index of an adapter name
+		int GetAdapterIndex(const char* adaptername);
+		// Get the current adapter index
+		int GetAdapter();
+		// Set graphics adapter for CreateDX11device from an index
+		bool SetAdapter(int index = -1); 
+		// Get the description and output display name of the current adapter
+		bool GetAdapterInfo(char* adaptername, char* output, int maxchars);
+		// Get the description and output display name for a given adapter
+		bool GetAdapterInfo(int index, char* adaptername, char* output, int maxchars);
+		// Get adapter pointer for a given adapter (-1 means current)
+		IDXGIAdapter* GetAdapterPointer(int index = -1);
+		// Set required graphics adapter for CreateDX11device
+		void SetAdapterPointer(IDXGIAdapter* pAdapter);
+		// Find the index of the NVIDIA adapter in a multi-adapter system
+		bool FindNVIDIA(int &nAdapter);
+
+		//
+		// Graphics preference
+		// Windows 10 Vers 1803, build 17134 or later
+		//
+
+		// Get the Windows graphics preference for an application
+		int GetPerformancePreference(const char* path = nullptr);
+		// Set the Windows graphics preference for an application
+		bool SetPerformancePreference(int preference, const char* path = nullptr);
+		// Get the graphics adapter name for a Windows preference
+		bool GetPreferredAdapterName(int preference, char* adaptername, int maxchars);
+		// Set graphics adapter index for a Windows preference
+		bool SetPreferredAdapter(int preference);
+		// Windows graphics preference availability
+		bool IsPreferenceAvailable();
+		// Is the path a valid application
+		bool IsApplicationPath(const char* path);
+
+	protected:
+
+		void DebugLog(ID3D11Device* pd3dDevice, const char* format, ...);
+		int						m_AdapterIndex; // Adapter index
+		IDXGIAdapter*			m_pAdapterDX11; // Adapter pointer
+		ID3D11Device*           m_pd3dDevice;   // DX11 device
+		ID3D11DeviceContext*	m_pImmediateContext;
+		bool					m_bClassDevice;
+		D3D_DRIVER_TYPE			m_driverType;
+		D3D_FEATURE_LEVEL		m_featureLevel;
+		ID3D11Device1*          m_pd3dDevice1;
+		ID3D11DeviceContext1*   m_pImmediateContext1;
+
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutFrameCount.h 
+---------------------------------------- 
+/*
+
+					SpoutFrameCount.h
+
+				Frame counting management
+
+	Copyright (c) 2019-2025. Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification,
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice,
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice,
+		   this list of conditions and the following disclaimer in the documentation
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED.
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+#pragma once
+
+#ifndef __spoutFrameCount__
+#define __spoutFrameCount__
+
+#include "SpoutCommon.h"
+#include "SpoutSharedMemory.h"
+
+#include <string>
+#include <vector>
+#include <d3d11.h>
+#pragma comment (lib, "d3d11.lib") // for keyed mutex texture access
+#pragma comment (lib, "winmm.lib") // for timer resolution functions 
+
+using namespace spoututils;
+
+// USE_CHRONO is defined in SpoutUtils.h
+// Note comments about using an early platform toolset
+#ifdef USE_CHRONO
+#include <chrono> // c++11 timer
+#include <thread>
+#endif
+
+class SPOUT_DLLEXP spoutFrameCount {
+
+	public:
+
+	spoutFrameCount();
+    ~spoutFrameCount();
+
+	//
+	// Frame counting
+	//
+
+	// Enable or disable frame counting globally by registry setting
+	void SetFrameCount(bool bEnable);
+	// Enable frame counting for this sender
+	void EnableFrameCount(const char* SenderName);
+	// Disable frame counting
+	void DisableFrameCount();
+	// Pause frame counting
+	void PauseFrameCount(bool bPaused = true);
+	// Check status of frame counting
+	bool IsFrameCountEnabled();
+	// Is the received frame new
+	bool IsFrameNew();
+
+	// Received frame rate
+	double GetSenderFps();
+	// Received frame count
+	long GetSenderFrame();
+	// Frame count sender name
+	std::string GetSenderName();
+	// Frame rate control
+	void HoldFps(int fps);
+
+	//
+	// Used by other classes
+	//
+
+	// Sender increment the semaphore count
+	void SetNewFrame();
+
+	// Receiver read the semaphore count
+	bool GetNewFrame();
+
+	// Receiver wait on semaphore update
+	bool WaitNewFrame(DWORD dwTimeout);
+
+	// For class cleanup functions
+	void CleanupFrameCount();
+
+	//
+	// Mutex locks including DirectX 11 keyed mutex
+	// DX11 texture keyed mutex functions are private
+	// and called by the follwoing functions
+	//
+
+	// Test for texture access using a named sender mutex or keyed texture mutex 
+	bool CheckTextureAccess(ID3D11Texture2D* D3D11texture = nullptr);
+	// Release mutex and allow texture access
+	bool AllowTextureAccess(ID3D11Texture2D* D3D11texture = nullptr);
+
+	//
+	// Named mutex for shared texture access
+	//
+
+	// Create named mutex for a sender
+	bool CreateAccessMutex(const char* SenderName);
+	// Close the texture access mutex.
+	void CloseAccessMutex();
+	// Test access using a named mutex
+	bool CheckAccess();
+	// Allow access after gaining ownership
+	void AllowAccess();
+	// Test for keyed mutex
+	bool IsKeyedMutex(ID3D11Texture2D* D3D11texture);
+
+	//
+	// Sync events
+	//
+
+	// Set sync event 
+	void SetFrameSync(const char* name);
+	// Wait or test for a sync event
+	bool WaitFrameSync(const char* name, DWORD dwTimeout = 0);
+	// Close sync event
+	void CloseFrameSync();
+	// Check for existence of the sender frame sync event
+	bool CheckFrameSync();
+	// Enable/disable frame sync
+	void EnableFrameSync(bool bSync = true);
+	// Check for frame sync option
+	bool IsFrameSyncEnabled();
+
+protected:
+
+	// Texture access named mutex
+	HANDLE m_hAccessMutex;
+
+	// DX11 texture keyed mutex checks
+	bool CheckKeyedAccess(ID3D11Texture2D* D3D11texture);
+	bool AllowKeyedAccess(ID3D11Texture2D* D3D11texture);
+
+	// Frame count semaphore
+	bool m_bFrameCount; // Registry setting of frame count
+	bool m_bCountDisabled; // application disable
+	bool m_bIsNewFrame; // received frame is new
+
+	HANDLE m_hCountSemaphore; // semaphore handle
+	char m_CountSemaphoreName[256]; // semaphore name
+	char m_SenderName[256]; // sender currently connected to a receiver
+	long m_FrameCount; // sender frame count
+	long m_LastFrameCount; // receiver frame comparator
+	double m_FrameTime;
+	double m_FrameTimeTotal;
+	double m_FrameTimeNumber;
+	double m_lastFrame;
+
+	// Sender frame timing
+	double m_SystemFps;
+	double m_SenderFps;
+	void UpdateSenderFps(long framecount = 0);
+
+	// Windows minimum time period
+	UINT m_PeriodMin;
+	void StartTimePeriod();
+	void EndTimePeriod();
+
+	// Sync event
+	bool m_bFrameSync;
+	HANDLE m_hSyncEvent;
+	void OpenFrameSync(const char* SenderName);
+
+#ifdef USE_CHRONO
+
+	// Avoid C4251 warnings in SpoutLibrary by using pointers
+	// USE_CHRONO is defined in SpoutUtils.h
+	// Use of std::unique_ptr to avoid warning C26409 using new/delete
+	// results in warning C4251 needs to have dll-interface
+	std::chrono::steady_clock::time_point* m_FpsStartPtr;
+	std::chrono::steady_clock::time_point* m_FpsEndPtr;
+	std::chrono::steady_clock::time_point* m_FrameStartPtr;
+	std::chrono::steady_clock::time_point* m_FrameEndPtr;
+
+#endif
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutGL.h 
+---------------------------------------- 
+/*
+
+	SpoutGL.h
+	
+	Base class for OpenGL SpoutSDK
+	See also Sender and Receiver wrapper classes.
+
+	Copyright (c) 2021-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+*/
+#pragma once
+
+#ifndef __spoutGL__
+#define __spoutGL__
+
+// Change the path as required
+#include "SpoutGLextensions.h" // include first so that gl.h is not included first if Glew is used
+#include "SpoutCommon.h" // for dll build and utilities
+#include "SpoutSenderNames.h" // for sender creation and update
+#include "SpoutDirectX.h" // for DX11 shared textures
+#include "SpoutFrameCount.h" // for mutex lock and new frame signal
+#include "SpoutCopy.h" // for pixel copy
+
+#include <direct.h> // for _getcwd
+#include <tlhelp32.h> // for PROCESSENTRY32
+#include <tchar.h> // for _tcsicmp
+
+#pragma warning(disable : 26485)
+
+// Used throughout
+using namespace spoututils;
+
+
+class SPOUT_DLLEXP spoutGL {
+
+	public:
+
+	spoutGL();
+    virtual ~spoutGL();
+
+	//
+	// OpenGL shared texture access
+	//
+
+	// Bind OpenGL shared texture
+	bool BindSharedTexture();
+	// Un-bind OpenGL shared texture
+	bool UnBindSharedTexture();
+	// OpenGL shared texture ID
+	GLuint GetSharedTextureID();
+
+	//
+	// Graphics compatibility
+	//
+
+	// Get user auto GPU/CPU share
+	bool GetAutoShare();
+	// Set application auto GPU/CPU share
+	void SetAutoShare(bool bAuto = true);
+	// Get user CPU share
+	bool GetCPUshare();
+	// Set application CPU share
+	// (re-test GL/DX compatibility if set to false)
+	void SetCPUshare(bool bCPU = true);
+	// OpenGL texture share compatibility
+	bool IsGLDXready();
+
+	//
+	// User settings recorded in the registry by "SpoutSettings"
+	//
+	
+	// Get user buffering mode
+	bool GetBufferMode();
+	// Set application buffering mode
+	void SetBufferMode(bool bActive = true);
+	// Get user number of pixel buffers
+	int GetBuffers();
+	// Set application number of pixel buffers
+	void SetBuffers(int nBuffers);
+	// Get user Maximum senders allowed
+	int GetMaxSenders();
+	// Set user Maximum senders allowed
+	void SetMaxSenders(int maxSenders);
+	
+	//
+	// 2.006 compatibility
+	//
+
+	// Get user DX9 mode
+	bool GetDX9();
+	// Set user DX9 mode
+	bool SetDX9(bool bDX9 = true);
+	// Get user memory share mode
+	bool GetMemoryShareMode();
+	// Set user memory share mode
+	bool SetMemoryShareMode(bool bMem = true);
+	// Get user CPU mode
+	bool GetCPUmode();
+	// Set user CPU mode
+	bool SetCPUmode(bool bCPU);
+	// Get user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	int GetShareMode();
+	// Set user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	void SetShareMode(int mode);
+
+	//
+	// Information
+	//
+
+	// The path of the host that produced the sender
+	bool GetHostPath(const char *sendername, char *hostpath, int maxchars);
+	// Vertical sync status
+	int GetVerticalSync();
+	// Lock to monitor vertical sync
+	//   1 - wait for 1 cycle vertical refresh
+	//   0 - buffer swaps are not synchronized to a video frame
+	//  -1 - adaptive vsync
+	bool SetVerticalSync(int interval = 1);
+	// Get Spout version
+	int GetSpoutVersion();
+
+	//
+	// Utility
+	//
+	
+	// Copy OpenGL texture with optional invert
+	bool CopyTexture(GLuint SourceID, GLuint SourceTarget, GLuint DestID, GLuint DestTarget,
+		unsigned int width, unsigned int height, bool bInvert = false, GLuint HostFBO = 0);
+	// Copy OpenGL texture data to a pixel buffer
+	bool ReadTextureData(GLuint SourceID, GLuint SourceTarget,
+		void* data, unsigned int width, unsigned int height, unsigned int rowpitch,
+		GLenum dataformat, GLenum datatype, bool bInvert = false, GLuint HostFBO = 0);
+	// Correct for image stride
+	void RemovePadding(const unsigned char *source, unsigned char *dest,
+		unsigned int width, unsigned int height, unsigned int stride, GLenum glFormat = GL_RGBA);
+
+	// OpenGL error reporting
+	bool GLerror();
+
+	// DX11 texture read
+	//  o Copy from the shared DX11 texture to a DX11 texture
+	bool ReadTexture(ID3D11Texture2D** texture);
+
+	// DX11 texture write
+	//  o Copy a DX11 texture to the shared DX11 texture
+	bool WriteTexture(ID3D11Texture2D** texture);
+
+	// DX11 texture write with readback to OpenGL
+	//   o Copy a DX11 texture to the DX11 shared texture
+	//   o Copy the linked OpenGL texture back to an OpenGL texture
+	bool WriteTextureReadback(ID3D11Texture2D** texture, GLuint TextureID, GLuint TextureTarget,
+		unsigned int width, unsigned int height, bool bInvert, GLuint HostFBO = 0);
+
+	// Copy a region of the DX11 texture
+	bool WriteTextureReadback(ID3D11Texture2D ** texture, GLuint TextureID, GLuint TextureTarget,
+		unsigned int xoffset, unsigned int yoffset, unsigned int width, unsigned int height,
+		bool bInvert, GLuint HostFBO = 0);
+
+	// Initialize OpenGL and DX11
+	//     o Load extensions and check for availability and function
+	//     o Open DirectX and check for availability
+	//     o Compatibility test for use or GL/DX interop
+	//     o Optionally re-test compatibility even if already initialized
+	bool OpenSpout(bool bRetest = false);
+	// Initialize DirectX
+	bool OpenDirectX();
+	// Close DirectX and free resources
+	void CloseDirectX();
+
+	//
+	// Formats
+	//
+
+	// Get sender DX11 shared texture format
+	DXGI_FORMAT GetDX11format();
+	// Set sender DX11 shared texture format
+	void SetDX11format(DXGI_FORMAT textureformat);
+	// Return OpenGL compatible DX11 format
+	DXGI_FORMAT DX11format(GLint glformat);
+	// Return DX11 compatible OpenGL format
+	GLint GLDXformat(DXGI_FORMAT textureformat = DXGI_FORMAT_UNKNOWN);
+	// Return OpenGL texture internal format
+	GLint GLformat(GLuint TextureID, GLuint TextureTarget);
+	// Return OpenGL texture format description
+	std::string GLformatName(GLint glformat = 0);
+	// Create an OpenGL window and context for situations where there is none.
+	//   Not used if applications already have an OpenGL context.
+	//   Always call CloseOpenGL afterwards.
+	bool CreateOpenGL(HWND hwnd = nullptr);
+	// Close OpenGL window
+	bool CloseOpenGL();
+	// Class initialization status
+	bool IsSpoutInitialized();
+	// Perform tests for GL/DX interop availability and compatibility
+	bool GLDXready();
+	// Set host path to sender shared memory
+	bool SetHostPath(const char *sendername);
+	// Set sender PartnerID field with CPU sharing method and GL/DX compatibility
+	bool SetSenderID(const char *sendername, bool bCPU, bool bGLDX);
+	
+	//
+	// 2.006 compatibility
+	//
+
+	bool OpenDirectX11(ID3D11Device* pDevice = nullptr);
+	ID3D11Device* GetDX11Device();
+	ID3D11DeviceContext* GetDX11Context();
+	void CleanupDirectX();
+	void CleanupDX11();
+	bool CleanupInterop();
+
+	//
+	// OpenGL extensions
+	//
+
+	bool LoadGLextensions();
+	bool IsGLDXavailable(); // GL/DX interop extensions supported
+	bool IsBLITavailable(); // fbo blit extensions available
+	bool IsSWAPavailable(); // swap extensions available
+	bool IsBGRAavailable(); // bgra extensions available
+	bool IsCOPYavailable(); // copy extensions available
+	bool IsPBOavailable();  // pbo extensions supported
+	bool IsCONTEXTavailable(); // Context extension supported
+	float GetGLversion(); // OpenGL version - 3.0, 4.0, 4.6 etc
+
+	//
+	// Legacy OpenGL functions
+	//
+
+	// See _SpoutCommon.h_ #define legacyOpenGL
+#ifdef legacyOpenGL
+	void SaveOpenGLstate(unsigned int width, unsigned int height, bool bFitWindow = true);
+	void RestoreOpenGLstate();
+#endif
+
+	//
+	// Public for special use
+	//
+
+	// Link a shared DirectX texture to an OpenGL texture
+	HANDLE LinkGLDXtextures(void* pDXdevice, void* pSharedTexture, GLuint glTextureID);
+	// Return a handle to the the DX/GL interop device
+	HANDLE GetInteropDevice();
+	// Return a handle to the the DX/GL interop ojject
+	HANDLE GetInteropObject();
+	// Pointer to the shared DirectX texture
+	ID3D11Texture2D* GetDXsharedTexture();
+	// Create OpenGL texture
+	void InitTexture(GLuint& texID, GLenum GLformat, unsigned int width, unsigned int height);
+	// Copy OpenGL to shared DirectX 11 texture via CPU
+	bool WriteDX11texture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert, GLuint HostFBO);
+	// Copy from shared DX11 texture to OpenGL via CPU
+	bool ReadDX11texture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert, GLuint HostFBO);
+	// Read from an OpenGL texture to and RGBA buffer using pbo
+	bool UnloadTexturePixels(GLuint TextureID, GLuint TextureTarget,
+		unsigned int width, unsigned int height, unsigned int pitch,
+		unsigned char* data, GLenum glFormat = GL_RGBA,
+		bool bInvert = false, GLuint HostFBO = 0);
+	// Load pixels to an OpenGL texture using pbo
+	bool LoadTexturePixels(GLuint TextureID, GLuint TextureTarget,
+		unsigned int width, unsigned int height, 
+		const unsigned char* data, int GLformat = GL_RGBA,
+		bool bInvert = false);
+
+	//
+	// Data sharing
+	//
+
+	// Write data to shared memory
+	bool WriteMemoryBuffer(const char *name, const char* data, int length);
+	// Read data from shared memory
+	int ReadMemoryBuffer(const char* name, char* data, int maxlength);
+	// Create a shared memory buffer
+	bool CreateMemoryBuffer(const char *name, int length);
+	// Delete a shared memory buffer
+	bool DeleteMemoryBuffer();
+	// Get the number of bytes available for data transfer
+	int GetMemoryBufferSize(const char *name);
+
+	//
+	// For external access
+	//
+
+	// DirectX 11 texture sharing
+	spoutDirectX spoutdx;
+	// Pixel buffer copying
+	spoutCopy spoutcopy;
+	// Spout sender management
+	spoutSenderNames sendernames;
+	// Frame counting management
+	spoutFrameCount frame;
+
+protected :
+	
+	// For 2.006(receive only) / WriteMemoryBuffer / ReadMemoryBuffer
+	SpoutSharedMemory memoryshare;
+
+	// GL/DX functions
+	bool CreateInterop(unsigned int width, unsigned int height, DWORD dwFormat, bool bReceive);
+	HRESULT LockInteropObject(HANDLE hDevice, HANDLE *hObject);
+	HRESULT UnlockInteropObject(HANDLE hDevice, HANDLE *hObject);
+	void CleanupGL(); // Free OpenGL resources
+
+	// OpenGL texture create
+	void CheckOpenGLTexture(GLuint &texID, GLenum GLformat, unsigned int width, unsigned int height);
+
+	// OpenGL texture copy to/from the shared texture
+	bool WriteGLDXtexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = true, GLuint HostFBO = 0);
+	bool ReadGLDXtexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = false, GLuint HostFBO = 0);
+	bool SetSharedTextureData(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert, GLuint HostFBO);
+	
+	// OpenGL pixel copy
+	bool WriteGLDXpixels(const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	bool ReadGLDXpixels(unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	
+	// PBOs for OpenGL pixel copy
+	int m_nBuffers;
+
+	// UnloadTexturePixels
+	GLuint m_pbo[4];
+	int PboIndex;
+	int NextPboIndex;
+
+	// LoadTexturePixels
+	GLuint m_loadpbo[4];
+	int PboLoadIndex;
+	int NextPboLoadIndex;
+	
+	// OpenGL <-> DX11
+	// WriteDX11texture - public
+	// ReadDX11texture  - public
+	
+	// Pixels <-> DX11
+	bool WriteDX11pixels(const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false);
+	bool ReadDX11pixels(unsigned char * pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false);
+	bool WritePixelData(const unsigned char* pixels, ID3D11Texture2D* pStagingTexture, unsigned int width, unsigned int height, GLenum glFormat, bool bInvert);
+	bool ReadPixelData(ID3D11Texture2D* pStagingTexture, unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat, bool bInvert);
+
+	// Staging textures for DX11 CPU copy
+	ID3D11Texture2D* m_pStaging[2];
+	int m_Index;
+	int m_NextIndex;
+	bool CheckStagingTextures(unsigned int width, unsigned int height, int nTextures);
+
+	// 2.006 shared memory
+	bool ReadMemoryTexture(const char* sendername, GLuint TexID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = false, GLuint HostFBO = 0);
+	bool ReadMemoryPixels(const char* sendername, unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false);
+	bool WriteMemoryPixels(const char *sendername, const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false);
+
+	// Utility
+	bool OpenDeviceKey(const char* key, int maxsize, char* description, char* version);
+	void trim(char* s);
+
+	// Errors
+	void DoDiagnostics(const char *error);
+	void PrintFBOstatus(GLenum status);
+
+	//
+	// Class globals
+	//
+
+	// Sender/Receiver
+	char m_SenderName[256];
+	char m_SenderNameSetup[256];
+	unsigned int m_Width;
+	unsigned int m_Height;
+
+	// Utility
+	GLuint m_fbo; // Fbo used for OpenGL functions
+	GLuint m_TexID; // Class texture used for invert copy
+	unsigned int m_TexWidth;
+	unsigned int m_TexHeight;
+	DWORD m_TexFormat;
+
+	// Shared texture
+	GLuint m_glTexture; // OpenGL shared texture
+	ID3D11Texture2D* m_pSharedTexture; // DirectX shared texture
+	HANDLE m_dxShareHandle; // DirectX shared texture handle
+	DXGI_FORMAT m_DX11format; // DirectX 11 shared texture format
+	DWORD m_dwFormat; // DWORD texture format used throughout
+
+	// GL/DX interop
+	HANDLE m_hInteropDevice; // Handle to the DX/GL interop device
+	HANDLE m_hInteropObject; // Handle to the DX/GL interop object (the shared texture)
+	bool m_bInteropFailed = false; // Interop failure flag to avoid repeats
+
+	// General
+	HWND m_hWnd; // OpenGL window
+	int m_SpoutVersion; // Spout version
+
+	// For CreateOpenGL and CloseOpenGL
+	HDC m_hdc;
+	HWND m_hwndButton;
+	HGLRC m_hRc;
+
+	// Status flags
+	bool m_bConnected;   // Receiver connected to a sender
+	bool m_bUpdated;     // Receiver update flag
+	bool m_bInitialized; // Receiver or sender initialization
+	bool m_bSender;      // Sender or receiver
+	bool m_bGLDXdone;    // Compatibility test done
+
+	// Sharing modes
+	bool m_bAuto;         // Auto share mode - user set
+	bool m_bCPU;          // Global CPU mode - user set
+	bool m_bUseGLDX;      // Hardware GL/DX interop compatibility
+	bool m_bTextureShare; // Using texture sharing methods
+	bool m_bCPUshare;     // Using CPU sharing methods
+	bool m_bMemoryShare;  // Using 2.006 memoryshare methods
+	
+	// Sender sharing modes
+	bool m_bSenderCPU;    // Sender using CPU sharing methods
+	bool m_bSenderGLDX;   // Sender hardware GL/DX compatibility
+
+	// For SpoutPanel sender selection
+	bool m_bSpoutPanelOpened;
+	bool m_bSpoutPanelActive;
+	SHELLEXECUTEINFOA m_ShExecInfo;
+
+	// OpenGL extensions
+	unsigned int m_caps;
+	bool m_bGLDXavailable;
+	bool m_bFBOavailable;
+	bool m_bBLITavailable;
+	bool m_bPBOavailable;
+	bool m_bSWAPavailable;
+	bool m_bBGRAavailable;
+	bool m_bCOPYavailable;
+	bool m_bCONTEXTavailable;
+	bool m_bExtensionsLoaded;
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutGLextensions.h 
+---------------------------------------- 
+//
+//			spoutGLextensions.h
+//
+//			Used for load of openGL extensions with options	to 
+//			use Glew or disable dynamic load of specific extension types
+//
+//			If Glew is used, none of the extensions are loaded dynamically.
+//			Individual extension types can be disabled if they conflict
+//			with extensions already managed by particular applications.
+//
+//			NVIDIA GL/DX interop extensions
+//			Fbo extensions
+//			Fbo blit extensions
+//			Pbo extensions
+//			wglSwapInterval extensions
+//
+//
+//			03.11.14 - added additional defines for framebuffer status checks
+//			02.01.15 - added GL_BGR for SpoutCam
+//			21.11.18 - added preprocessor define for Jitter externals
+//					   https://github.com/robtherich/Spout2
+//			19.04.23 - correct glGenBuffersPROC and glUnmapBufferPROC
+//					   to match with Glew.h
+//			18.01.25 - Rename "standalone" to "StandAloneExtensions"
+//					   to avoid naming conflicts
+//
+//			All changes now documented in SpoutGLextensions.cpp
+//
+/*
+
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+#pragma once
+#ifndef __spoutGLextensions__	// standard way as well
+#define __spoutGLextensions__
+
+
+//
+// Header: spoutGLextensions
+//
+// Used for load of openGL extensions with options to use Glew
+// or disable dynamic load of specific extension types.
+// If Glew is used, none of the extensions are loaded dynamically.
+// Individual extension types can be disabled if they conflict
+// with extensions already managed by particular applications.
+//
+// Refer to source code for documentation.
+//
+
+//
+// ====================== COMPILE OPTIONS ============================
+//
+
+//
+// Define "standaloneExtensions" here to use
+// the extensions independently of Spout source files.
+// Leave undefined otherwise.
+//
+// #define standaloneExtensions
+//
+
+#ifdef standaloneExtensions
+
+#include <windows.h>
+#include <stdio.h> // for console
+#include <iostream> // std::cout, std::end
+
+//
+// Define For use of 'EXT_framebuffer_object' in loadFBOextensions
+// and glGetString in isExtensionSupported
+// Not required unless compatibility with OpenGL < 3 is necessary
+// * Note that the same definition is in SpoutCommon.h if not standalone
+//
+// #define legacyOpenGL
+//
+#else
+// For use together with Spout source files
+#include "SpoutCommon.h" // for legacyOpenGL define and Utils
+#include <stdint.h> // for _uint32 etc
+
+// ===================== GLEW ======================
+// set this to use GLEW instead of dynamic load of extensions
+// #define USE_GLEW	
+// set this to use glew32s.lib instead of glew32.lib
+// #define GLEW_STATIC
+// =================================================
+#endif
+
+
+// If load of FBO extensions conflicts with FFGL or Jitter, disable them here
+#ifndef UNDEF_USE_FBO_EXTENSIONS
+#define USE_FBO_EXTENSIONS // don't use for jitter
+#endif
+
+// If load of PBO extensions conflicts, disable them here - OK for Jitter
+#define USE_PBO_EXTENSIONS
+
+// If load of COPY extensions conflicts, disable them here
+// Only used for testing
+#define USE_COPY_EXTENSIONS
+
+// GL memory extensions
+#define USE_GLMEMORY_EXTENSIONS
+
+// Compute shader extensions
+// Remove for Processing library build (JSpoutLib)
+#define USE_COMPUTE_EXTENSIONS
+
+// If load of context creation extension conflicts, disable it here
+// Only used for testing
+#define USE_CONTEXT_EXTENSION
+// ========================= end Compile options ================================
+
+
+//------------------------------------------------------------
+// Allow for use of Glew instead of dynamic load of extensions
+//------------------------------------------------------------
+#ifdef USE_GLEW
+	#include <GL/glew.h>
+	#include <GL/wglew.h> // wglew.h and glxew.h, which define the available WGL and GLX extensions
+#else
+	#include <GL/GL.h>
+	#include <cstdint> // For MingW
+	#ifndef USE_FBO_EXTENSIONS
+		// For Max/Msp Jitter
+		#include "jit.gl.h"
+		#define glDeleteFramebuffersEXT	(_jit_gl_get_proctable()->DeleteFramebuffersEXT)
+	#endif
+#endif
+
+
+//
+// Spout compatible Log levels
+//
+enum ExtLogLevel {
+	SPOUT_EXT_LOG_SILENT,
+	SPOUT_EXT_LOG_VERBOSE,
+	SPOUT_EXT_LOG_NOTICE,
+	SPOUT_EXT_LOG_WARNING,
+	SPOUT_EXT_LOG_ERROR,
+	SPOUT_EXT_LOG_FATAL,
+	SPOUT_EXT_LOG_NONE
+};
+
+
+//
+// ====================== EXTENSIONS ============================
+//
+
+
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
+
+// FRAMEBUFFER
+#ifndef GL_READ_FRAMEBUFFER
+#define GL_READ_FRAMEBUFFER 0x8CA8
+#endif
+
+#ifndef GL_DRAW_FRAMEBUFFER
+#define GL_DRAW_FRAMEBUFFER 0x8CA9
+#endif
+
+
+// FRAMEBUFFER EXT
+#ifndef GL_READ_FRAMEBUFFER_EXT
+#define GL_READ_FRAMEBUFFER_EXT 0x8CA8
+#endif
+
+#ifndef GL_DRAW_FRAMEBUFFER_EXT
+#define GL_DRAW_FRAMEBUFFER_EXT 0x8CA9
+#endif
+
+#ifndef GL_DRAW_FRAMEBUFFER_BINDING_EXT
+#define GL_DRAW_FRAMEBUFFER_BINDING_EXT 0x8CA6
+#endif
+
+#ifndef GL_READ_FRAMEBUFFER_BINDING_EXT
+#define GL_READ_FRAMEBUFFER_BINDING_EXT 0x8CAA
+#endif
+
+#ifndef GL_INVALID_FRAMEBUFFER_OPERATION_EXT
+#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT 0x0506
+#endif
+
+/*
+		GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
+		GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+		GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+		GPU_MEMORY_INFO_EVICTION_COUNT_NVX
+		GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
+*/
+
+// dedicated video memory, total size (in kb) of the GPU memory
+#ifndef GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
+#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX 0x9047
+#endif
+
+#ifndef GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX
+#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
+#endif
+
+#ifndef GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX
+#define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
+#endif
+
+#ifndef GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX 0x9049
+#endif
+
+#ifndef GPU_MEMORY_INFO_EVICTION_COUNT_NVX
+#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX 0x904A
+#endif
+
+#ifndef GPU_MEMORY_INFO_EVICTED_MEMORY_NVX
+#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX 0x904B
+#endif
+
+//
+// ATI
+// https://registry.khronos.org/OpenGL/extensions/ATI/ATI_meminfo.txt
+//
+// Information on the current memory resources available can be queried
+// by specifying VBO_FREE_MEMORY_ATI, TEXTURE_FREE_MEMORY_ATI, or
+// RENDERBUFFER_FREE_MEMORY_ATI as the value parameter to  GetIntergerv.
+// These return the memory status for pools of memory used for vertex
+// buffer objects, textures, and render buffers respectively.
+//
+// param[0] - total memory free in the pool
+// param[1] - largest available free block in the pool
+// param[2] - total auxiliary memory free
+// param[3] - largest auxiliary free block
+//
+#ifndef VBO_FREE_MEMORY_ATI
+#define VBO_FREE_MEMORY_ATI            0x87FB
+#endif
+
+#ifndef TEXTURE_FREE_MEMORY_ATI
+#define TEXTURE_FREE_MEMORY_ATI        0x87FC
+#endif
+
+#ifndef RENDERBUFFER_FREE_MEMORY_ATI
+#define RENDERBUFFER_FREE_MEMORY_ATI   0x87FD
+#endif
+
+// glext.h
+#define GL_TEXTURE_TARGET              0x1006
+
+// glext_1.h
+#define GL_TEXTURE_DEPTH               0x8071
+#define GL_TEXTURE_BUFFER_OFFSET       0x919D
+#define GL_TEXTURE_BUFFER_SIZE         0x919E
+
+
+// Define GL_BGRA in case it is used
+#ifndef GL_BGRA
+#define GL_BGRA                        0x80E1
+#endif
+#ifndef GL_BGRA8
+#define GL_BGRA8                       0x93A1
+#endif
+#ifndef GL_BGRA8_EXT
+#define GL_BGRA8_EXT                   0x93A1
+#endif
+
+
+// RGBA <> BGRA
+#ifndef GL_TEXTURE_SWIZZLE_RGBA
+#define GL_TEXTURE_SWIZZLE_RGBA        0x8E46
+#endif
+#ifndef GL_TEXTURE_SWIZZLE_R
+#define GL_TEXTURE_SWIZZLE_R           0x8E42
+#endif
+#ifndef GL_TEXTURE_SWIZZLE_G
+#define GL_TEXTURE_SWIZZLE_G           0x8E43
+#endif
+#ifndef GL_TEXTURE_SWIZZLE_B
+#define GL_TEXTURE_SWIZZLE_B           0x8E44
+#endif
+
+// OpenGL floating point formats
+
+// gl3.h
+#ifndef GL_RGBA16F
+#define GL_RGBA16F                     0x881A
+#endif
+
+#ifndef GL_RGB16F
+#define GL_RGB16F                      0x881B
+#endif
+
+// gl4.h
+#ifndef GL_RGBA32F
+#define GL_RGBA32F                     0x8814
+#endif
+
+#ifndef GL_RGB32F
+#define GL_RGB32F                      0x8815
+#endif
+
+
+//------------------------
+// EXTENSION SUPPORT FLAGS
+//------------------------
+#define GLEXT_SUPPORT_NVINTEROP		  1
+#define GLEXT_SUPPORT_FBO			  2
+#define GLEXT_SUPPORT_FBO_BLIT		  4
+#define GLEXT_SUPPORT_PBO			  8
+#define GLEXT_SUPPORT_SWAP			 16
+#define GLEXT_SUPPORT_BGRA			 32
+#define GLEXT_SUPPORT_COPY			 64
+#define GLEXT_SUPPORT_GLMEMORY		128
+#define GLEXT_SUPPORT_COMPUTE		256
+#define GLEXT_SUPPORT_CONTEXT       512
+
+//-----------------------------------------------------
+// GL consts that are needed and aren't present in GL.h
+//-----------------------------------------------------
+#ifndef GL_TEXTURE_2D_MULTISAMPLE
+#define GL_TEXTURE_2D_MULTISAMPLE 	0x9100
+#endif
+#ifndef WGL_ACCESS_READ_ONLY_NV
+#define WGL_ACCESS_READ_ONLY_NV		0x0000
+#endif
+#ifndef WGL_ACCESS_READ_WRITE_NV
+#define WGL_ACCESS_READ_WRITE_NV	0x0001
+#endif
+#ifndef WGL_ACCESS_WRITE_DISCARD_NV
+#define WGL_ACCESS_WRITE_DISCARD_NV	0x0002
+#endif
+
+#define GL_CLAMP_TO_EDGE				0x812F
+
+// Other
+#ifndef  GL_MAJOR_VERSION
+#define GL_MAJOR_VERSION				0x821B
+#endif
+#ifndef GL_MINOR_VERSION 
+#define GL_MINOR_VERSION				0x821C
+#endif
+#ifndef GL_NUM_EXTENSIONS
+#define GL_NUM_EXTENSIONS				0x821D
+#endif
+#ifndef GL_CONTEXT_FLAGS // The flags with which the context was created.
+#define GL_CONTEXT_FLAGS				0x821E
+#endif
+
+#ifndef GL_CONTEXT_FLAGS
+#define GL_CONTEXT_FLAGS				0x821E
+#endif
+#ifndef GL_CONTEXT_PROFILE_MASK
+#define GL_CONTEXT_PROFILE_MASK			0x9126
+#endif
+
+#ifndef GL_CONTEXT_CORE_PROFILE_BIT
+#define GL_CONTEXT_CORE_PROFILE_BIT            0x00000001
+#endif
+#ifndef GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
+#define GL_CONTEXT_COMPATIBILITY_PROFILE_BIT   0x00000002
+#endif
+#ifndef GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT
+#define GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT 0x00000001
+#endif
+#ifndef GL_CONTEXT_FLAG_DEBUG_BIT
+#define GL_CONTEXT_FLAG_DEBUG_BIT              0x00000002
+#endif
+#ifndef GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT
+#define GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT      0x00000004
+#endif
+#ifndef GL_CONTEXT_FLAG_NO_ERROR_BIT
+#define GL_CONTEXT_FLAG_NO_ERROR_BIT           0x00000008
+#endif
+
+#ifndef USE_GLEW
+
+// ----------------------------
+// Memory management extensions
+// ----------------------------
+#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
+#define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
+
+
+//----------------------
+// GL interop extensions
+//----------------------
+typedef HANDLE	(WINAPI * PFNWGLDXOPENDEVICENVPROC)				(void* dxDevice);
+typedef BOOL	(WINAPI * PFNWGLDXCLOSEDEVICENVPROC)			(HANDLE hDevice);
+typedef HANDLE	(WINAPI * PFNWGLDXREGISTEROBJECTNVPROC)			(HANDLE hDevice, void* dxObject, GLuint name, GLenum type, GLenum access);
+typedef BOOL	(WINAPI * PFNWGLDXUNREGISTEROBJECTNVPROC)		(HANDLE hDevice, HANDLE hObject);
+typedef BOOL	(WINAPI * PFNWGLDXSETRESOURCESHAREHANDLENVPROC)	(void *dxResource, HANDLE shareHandle);
+typedef BOOL	(WINAPI * PFNWGLDXLOCKOBJECTSNVPROC)			(HANDLE hDevice, GLint count, HANDLE *hObjects);
+typedef BOOL	(WINAPI * PFNWGLDXUNLOCKOBJECTSNVPROC)			(HANDLE hDevice, GLint count, HANDLE *hObjects);
+
+extern PFNWGLDXOPENDEVICENVPROC				wglDXOpenDeviceNV;
+extern PFNWGLDXCLOSEDEVICENVPROC			wglDXCloseDeviceNV;
+extern PFNWGLDXREGISTEROBJECTNVPROC			wglDXRegisterObjectNV;
+extern PFNWGLDXUNREGISTEROBJECTNVPROC		wglDXUnregisterObjectNV;
+extern PFNWGLDXSETRESOURCESHAREHANDLENVPROC wglDXSetResourceShareHandleNV;
+extern PFNWGLDXLOCKOBJECTSNVPROC			wglDXLockObjectsNV;
+extern PFNWGLDXUNLOCKOBJECTSNVPROC			wglDXUnlockObjectsNV;
+
+
+//---------------
+// FBO extensions
+//---------------
+#ifdef USE_FBO_EXTENSIONS
+#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT                0x0506
+#define GL_FRAMEBUFFER_UNDEFINED_EXT						0x8219
+#define GL_FRAMEBUFFER_UNDEFINED							0x8219
+#define GL_MAX_RENDERBUFFER_SIZE_EXT                        0x84E8
+#define GL_FRAMEBUFFER_BINDING_EXT                          0x8CA6
+#define GL_RENDERBUFFER_BINDING_EXT                         0x8CA7
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT           0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT           0x8CD1
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT         0x8CD2
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT 0x8CD3
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT    0x8CD4
+#define GL_COLOR_ATTACHMENT0                                0x8CE0
+#define GL_COLOR_ATTACHMENT1                                0x8CE1
+#define GL_COLOR_ATTACHMENT2                                0x8CE2
+#define GL_COLOR_ATTACHMENT3                                0x8CE3
+#define GL_FRAMEBUFFER_COMPLETE_EXT                         0x8CD5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT            0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT    0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT  0x8CD8
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT            0x8CD9
+#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT               0x8CDA
+#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT           0x8CDB
+#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT           0x8CDC
+#define GL_FRAMEBUFFER_UNSUPPORTED_EXT                      0x8CDD
+#define GL_FRAMEBUFFER_STATUS_ERROR_EXT                     0x8CDE
+#define GL_MAX_COLOR_ATTACHMENTS_EXT                        0x8CDF
+#define GL_COLOR_ATTACHMENT0_EXT                            0x8CE0
+#define GL_COLOR_ATTACHMENT1_EXT                            0x8CE1
+#define GL_COLOR_ATTACHMENT2_EXT                            0x8CE2
+#define GL_COLOR_ATTACHMENT3_EXT                            0x8CE3
+#define GL_COLOR_ATTACHMENT4_EXT                            0x8CE4
+#define GL_COLOR_ATTACHMENT5_EXT                            0x8CE5
+#define GL_COLOR_ATTACHMENT6_EXT                            0x8CE6
+#define GL_COLOR_ATTACHMENT7_EXT                            0x8CE7
+#define GL_COLOR_ATTACHMENT8_EXT                            0x8CE8
+#define GL_COLOR_ATTACHMENT9_EXT                            0x8CE9
+#define GL_COLOR_ATTACHMENT10_EXT                           0x8CEA
+#define GL_COLOR_ATTACHMENT11_EXT                           0x8CEB
+#define GL_COLOR_ATTACHMENT12_EXT                           0x8CEC
+#define GL_COLOR_ATTACHMENT13_EXT                           0x8CED
+#define GL_COLOR_ATTACHMENT14_EXT                           0x8CEE
+#define GL_COLOR_ATTACHMENT15_EXT                           0x8CEF
+#define GL_DEPTH_ATTACHMENT_EXT                             0x8D00
+#define GL_STENCIL_ATTACHMENT_EXT                           0x8D20
+#define GL_FRAMEBUFFER_EXT                                  0x8D40
+#define GL_RENDERBUFFER_EXT                                 0x8D41
+#define GL_RENDERBUFFER_WIDTH_EXT                           0x8D42
+#define GL_RENDERBUFFER_HEIGHT_EXT                          0x8D43
+#define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT                 0x8D44
+#define GL_STENCIL_INDEX_EXT                                0x8D45
+#define GL_STENCIL_INDEX1_EXT                               0x8D46
+#define GL_STENCIL_INDEX4_EXT                               0x8D47
+#define GL_STENCIL_INDEX8_EXT                               0x8D48
+#define GL_STENCIL_INDEX16_EXT                              0x8D49
+#define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT			0x8D56
+#define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS_EXT			0x8DA8
+
+// gl3.h Read Format
+#define GL_IMPLEMENTATION_COLOR_READ_TYPE                   0x8B9A
+#define GL_IMPLEMENTATION_COLOR_READ_FORMAT                 0x8B9B
+
+#define GL_FRAMEBUFFER_DEFAULT_WIDTH      0x9310
+#define GL_FRAMEBUFFER_DEFAULT_HEIGHT     0x9311
+
+typedef void   (APIENTRY *glBindFramebufferEXTPROC)			(GLenum target, GLuint framebuffer);
+typedef void   (APIENTRY *glBindRenderbufferEXTPROC)		(GLenum target, GLuint renderbuffer);
+typedef GLenum (APIENTRY *glCheckFramebufferStatusEXTPROC)	(GLenum target);
+typedef GLenum (APIENTRY* glCheckNamedFramebufferStatusEXTPROC)	(GLuint framebuffer, GLenum target);
+typedef void   (APIENTRY *glDeleteFramebuffersEXTPROC)		(GLsizei n, const GLuint* framebuffers);
+typedef void   (APIENTRY *glDeleteRenderBuffersEXTPROC)		(GLsizei n, const GLuint* renderbuffers);
+typedef void   (APIENTRY *glFramebufferRenderbufferEXTPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+typedef void   (APIENTRY *glFramebufferTexture1DEXTPROC)	(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+typedef void   (APIENTRY *glFramebufferTexture2DEXTPROC)	(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+typedef void   (APIENTRY *glFramebufferTexture3DEXTPROC)	(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+typedef void   (APIENTRY *glGenFramebuffersEXTPROC)			(GLsizei n, GLuint* framebuffers);
+typedef void   (APIENTRY *glGenRenderbuffersEXTPROC)		(GLsizei n, GLuint* renderbuffers);
+typedef void   (APIENTRY *glGenerateMipmapEXTPROC)			(GLenum target);
+typedef void   (APIENTRY *glGetFramebufferAttachmentParameterivEXTPROC) (GLenum target, GLenum attachment, GLenum pname, GLint* params);
+typedef void   (APIENTRY *glGetRenderbufferParameterivEXTPROC) (GLenum target, GLenum pname, GLint* params);
+typedef GLboolean (APIENTRY *glIsFramebufferEXTPROC)		(GLuint framebuffer);
+typedef GLboolean (APIENTRY *glIsRenderbufferEXTPROC)		(GLuint renderbuffer);
+typedef void (APIENTRY *glRenderbufferStorageEXTPROC)		(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+
+extern glBindFramebufferEXTPROC						glBindFramebufferEXT;
+extern glBindRenderbufferEXTPROC					glBindRenderbufferEXT;
+extern glCheckFramebufferStatusEXTPROC				glCheckFramebufferStatusEXT;
+extern glCheckNamedFramebufferStatusEXTPROC			glCheckNamedFramebufferStatusEXT;
+extern glDeleteFramebuffersEXTPROC					glDeleteFramebuffersEXT;
+extern glDeleteRenderBuffersEXTPROC					glDeleteRenderBuffersEXT;
+extern glFramebufferRenderbufferEXTPROC				glFramebufferRenderbufferEXT;
+extern glFramebufferTexture1DEXTPROC				glFramebufferTexture1DEXT;
+extern glFramebufferTexture2DEXTPROC				glFramebufferTexture2DEXT;
+extern glFramebufferTexture3DEXTPROC				glFramebufferTexture3DEXT;
+extern glGenFramebuffersEXTPROC						glGenFramebuffersEXT;
+extern glGenRenderbuffersEXTPROC					glGenRenderbuffersEXT;
+extern glGenerateMipmapEXTPROC						glGenerateMipmapEXT;
+extern glGetFramebufferAttachmentParameterivEXTPROC	glGetFramebufferAttachmentParameterivEXT;
+extern glGetRenderbufferParameterivEXTPROC			glGetRenderbufferParameterivEXT;
+extern glIsFramebufferEXTPROC						glIsFramebufferEXT;
+extern glIsRenderbufferEXTPROC						glIsRenderbufferEXT;
+extern glRenderbufferStorageEXTPROC					glRenderbufferStorageEXT;
+
+#endif // USE_FBO_EXTENSIONS
+
+//-------------------
+// Blit FBO extension
+//-------------------
+#define READ_FRAMEBUFFER_EXT	0x8CA8
+#define DRAW_FRAMEBUFFER_EXT	0x8CA9
+
+typedef void   (APIENTRY *glBlitFramebufferEXTPROC) (GLint srcX0,GLint srcY0,GLint srcX1,GLint srcY1,GLint dstX0,GLint dstY0,GLint dstX1,GLint dstY1,GLbitfield mask,GLenum filter);
+extern glBlitFramebufferEXTPROC glBlitFramebufferEXT;
+
+//-------------------
+// Blit FBO extension
+//-------------------
+#define READ_FRAMEBUFFER_EXT	0x8CA8
+#define DRAW_FRAMEBUFFER_EXT	0x8CA9
+
+typedef void   (APIENTRY *glBlitFramebufferEXTPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+extern glBlitFramebufferEXTPROC glBlitFramebufferEXT;
+
+// ------------------------------
+// OpenGL vsync control extensions
+// ------------------------------
+#ifdef USE_FBO_EXTENSIONS
+typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+typedef int (WINAPI * PFNWGLGETSWAPINTERVALEXTPROC) (void);
+extern PFNWGLSWAPINTERVALEXTPROC       wglSwapIntervalEXT;
+extern PFNWGLGETSWAPINTERVALEXTPROC    wglGetSwapIntervalEXT;
+#endif
+
+//----------------
+//	PBO extensions
+//----------------
+#ifdef USE_PBO_EXTENSIONS
+#define GL_ARRAY_BUFFER					0x8892
+#define GL_PIXEL_PACK_BUFFER			0x88EB
+#define GL_PIXEL_UNPACK_BUFFER			0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING	0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING	0x88EF
+#define GL_STREAM_DRAW					0x88E0
+#define GL_STREAM_READ					0x88E1
+#define GL_READ_ONLY					0x88B8
+#define GL_WRITE_ONLY					0x88B9
+#define GL_READ_WRITE					0x88BA
+
+#define GL_BUFFER_SIZE					0x8764
+#ifndef GL_MAP_READ_BIT
+#define GL_MAP_READ_BIT					0x0001
+#endif
+#ifndef GL_MAP_WRITE_BIT
+#define GL_MAP_WRITE_BIT				0x0002
+#endif
+#ifndef GL_MAP_PERSISTENT_BIT
+#define GL_MAP_PERSISTENT_BIT			0x0040
+#endif
+#ifndef GL_MAP_COHERENT_BIT
+#define GL_MAP_COHERENT_BIT				0x0080 
+#endif
+
+//
+// Optional flag bits
+//
+#ifndef GL_MAP_INVALIDATE_RANGE_BIT
+#define GL_MAP_INVALIDATE_RANGE_BIT		0x0004
+#endif
+#ifndef GL_MAP_INVALIDATE_BUFFER_BIT
+#define GL_MAP_INVALIDATE_BUFFER_BIT	0x0008
+#endif
+#ifndef GL_MAP_FLUSH_EXPLICIT_BIT
+#define GL_MAP_FLUSH_EXPLICIT_BIT		0x0010
+#endif
+#ifndef GL_MAP_UNSYNCHRONIZED_BIT
+#define GL_MAP_UNSYNCHRONIZED_BIT		0x0020
+#endif
+#ifndef GL_SYNC_FLUSH_COMMANDS_BIT
+#define GL_SYNC_FLUSH_COMMANDS_BIT		0x0001
+#endif
+
+
+//
+// Sync
+//
+#ifndef GL_SYNC_CONDITION
+#define GL_SYNC_CONDITION                 0x9113
+#endif
+#ifndef GL_SYNC_STATUS
+#define GL_SYNC_STATUS                    0x9114
+#endif
+#ifndef GL_SYNC_FLAGS
+#define GL_SYNC_FLAGS                     0x9115
+#endif
+#ifndef GL_SYNC_FENCE
+#define GL_SYNC_FENCE                     0x9116
+#endif
+#ifndef GL_SYNC_GPU_COMMANDS_COMPLETE
+#define GL_SYNC_GPU_COMMANDS_COMPLETE     0x9117
+#endif
+#ifndef GL_UNSIGNALED
+#define GL_UNSIGNALED                     0x9118
+#endif
+#ifndef GL_SIGNALED
+#define GL_SIGNALED                       0x9119
+#endif
+#ifndef GL_ALREADY_SIGNALED
+#define GL_ALREADY_SIGNALED               0x911A
+#endif
+#ifndef GL_TIMEOUT_EXPIRED
+#define GL_TIMEOUT_EXPIRED                0x911B
+#endif
+#ifndef GL_CONDITION_SATISFIED
+#define GL_CONDITION_SATISFIED            0x911C
+#endif
+#ifndef GL_WAIT_FAILED
+#define GL_WAIT_FAILED                    0x911D
+#endif
+
+// ------------------------------
+// PBO extensions
+// ------------------------------
+typedef ptrdiff_t GLsizeiptr;
+typedef ptrdiff_t GLintptr;
+typedef void   (APIENTRY *glGenBuffersPROC)    (GLsizei n, GLuint* buffers);
+typedef void   (APIENTRY *glDeleteBuffersPROC) (GLsizei n, const GLuint* buffers);
+typedef void   (APIENTRY *glBindBufferPROC)    (GLenum target, const GLuint buffer);
+typedef void   (APIENTRY *glBufferDataPROC)    (GLenum target,  GLsizeiptr size,  const GLvoid * data,  GLenum usage);
+typedef void   (APIENTRY *glBufferStoragePROC) (GLenum target, GLsizeiptr size, const void * data, GLbitfield flags);
+typedef void * (APIENTRY *glMapBufferPROC) (GLenum target,  GLenum access);
+typedef void * (APIENTRY *glMapBufferRangePROC) (GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef GLboolean (APIENTRY *glUnmapBufferPROC) (GLenum target);
+typedef void   (APIENTRY *glGetBufferParameterivPROC) (GLenum target, GLenum value,	GLint * data);
+typedef void   (APIENTRY* glGetTextureParameterivPROC) (GLenum texture, GLenum value, GLint* data);
+
+
+extern glGenBuffersPROC		glGenBuffers;
+extern glDeleteBuffersPROC	glDeleteBuffers;
+extern glBindBufferPROC		glBindBuffer;
+extern glBufferDataPROC		glBufferData;
+extern glBufferStoragePROC	glBufferStorage;
+extern glMapBufferPROC		glMapBuffer;
+extern glMapBufferRangePROC	glMapBufferRange;
+extern glUnmapBufferPROC	glUnmapBuffer;
+extern glGetBufferParameterivPROC glGetBufferParameteriv;
+extern glGetTextureParameterivPROC glGetTextureParameteriv;
+
+// ------------------------------
+// SYNC objects
+// https://www.khronos.org/opengl/wiki/Sync_Object
+// ------------------------------
+typedef struct __GLsync *GLsync;
+typedef uint64_t GLuint64;
+typedef GLenum(APIENTRY *glClientWaitSyncPROC) (GLsync sync, GLbitfield flags, GLuint64 timeout);
+typedef void   (APIENTRY *glDeleteSyncPROC) (GLsync sync);
+typedef GLsync(APIENTRY *glFenceSyncPROC) (GLenum condition, GLbitfield flags);
+
+extern glClientWaitSyncPROC glClientWaitSyncEXT;
+extern glDeleteSyncPROC     glDeleteSyncEXT;
+extern glFenceSyncPROC      glFenceSyncEXT;
+
+#endif // USE_PBO_EXTENSIONS
+
+//-------------------
+// Copy extensions
+//-------------------
+
+#ifndef GL_INTERNALFORMAT_SUPPORTED
+#define GL_INTERNALFORMAT_SUPPORTED 0x826F
+#endif
+
+#ifdef USE_COPY_EXTENSIONS
+typedef void (APIENTRY * PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
+extern PFNGLCOPYIMAGESUBDATAPROC glCopyImageSubData;
+
+typedef void(APIENTRY * glGetInternalformativPROC)(GLenum target, GLenum internalfrmat, GLenum pname, GLsizei buffSize, GLint *params);
+extern glGetInternalformativPROC glGetInternalformativ;
+#endif // USE_COPY_EXTENSIONS
+
+//---------------------------
+// Compute shader extensions
+//---------------------------
+
+#ifndef GL_COMPUTE_SHADER
+#define GL_COMPUTE_SHADER 0x91B9
+#endif
+
+#ifndef GL_MAX_COMPUTE_WORK_GROUP_COUNT
+#define GL_MAX_COMPUTE_WORK_GROUP_COUNT   0x91BE
+#endif
+
+#ifndef GL_MAX_COMPUTE_WORK_GROUP_SIZE
+#define GL_MAX_COMPUTE_WORK_GROUP_SIZE    0x91BF
+#endif
+
+#ifndef GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS
+#define GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS 0x90EB
+#endif
+
+#ifndef GL_LINK_STATUS
+#define GL_LINK_STATUS 0x8B82
+#endif
+
+#ifndef GL_ATTACHED_SHADERS
+#define GL_ATTACHED_SHADERS 0x8B85
+#endif
+
+#ifndef GL_INFO_LOG_LENGTH
+#define GL_INFO_LOG_LENGTH 0x8B84
+#endif
+
+#ifndef GL_TEXTURE0
+#define GL_TEXTURE0 0x84C0
+#endif
+
+#ifndef GL_TEXTURE1
+#define GL_TEXTURE1 0x84C1
+#endif
+
+#ifndef GL_TEXTURE2
+#define GL_TEXTURE2 0x84C2
+#endif
+
+#ifndef GL_TEXTURE3
+#define GL_TEXTURE3 0x84C3
+#endif
+
+#ifndef GL_TEXTURE_IMMUTABLE_FORMAT
+#define GL_TEXTURE_IMMUTABLE_FORMAT 0x912F
+#endif
+
+
+typedef GLuint (APIENTRY* glCreateProgramPROC) (void);
+typedef GLuint (APIENTRY* glCreateShaderPROC) (GLenum type);
+typedef void   (APIENTRY* glShaderSourcePROC) (GLuint shader, GLsizei count, const char* const* string, const GLint* length);
+typedef void   (APIENTRY* glCompileShaderPROC) (GLuint shader);
+typedef void   (APIENTRY* glAttachShaderPROC) (GLuint program, GLuint shader);
+typedef void   (APIENTRY* glLinkProgramPROC) (GLuint program);
+typedef void   (APIENTRY* glGetProgramivPROC) (GLuint program, GLenum pname, GLint* param);
+typedef void   (APIENTRY* glGetProgramInfoLogPROC) (GLuint program, GLsizei maxLength, GLsizei* length, char* infoLog);
+typedef void   (APIENTRY* glGetShaderInfoLogPROC) (GLuint shader, GLsizei maxLength, GLsizei* length, char* infoLog);
+typedef void   (APIENTRY* glGetIntegeri_vPROC) (GLenum target, GLuint index, GLint* data);
+typedef void   (APIENTRY* glDetachShaderPROC) (GLuint program, GLuint shader);
+typedef void   (APIENTRY* glUseProgramPROC) (GLuint program);
+typedef void   (APIENTRY* glBindImageTexturePROC) (GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+typedef void   (APIENTRY* glDispatchComputePROC) (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+typedef void   (APIENTRY* glDeleteProgramPROC) (GLuint program);
+typedef void   (APIENTRY* glDeleteShaderPROC) (GLuint shader);
+
+typedef void   (APIENTRY* glMemoryBarrierPROC) (GLbitfield barriers);
+
+#ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+#define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
+#endif
+
+#ifndef GL_ALL_BARRIER_BITS
+#define GL_ALL_BARRIER_BITS 0xFFFFFFFF
+#endif
+
+extern glCreateProgramPROC		glCreateProgram;
+extern glCreateShaderPROC       glCreateShader;
+extern glShaderSourcePROC       glShaderSource;
+extern glCompileShaderPROC      glCompileShader;
+extern glAttachShaderPROC       glAttachShader;
+extern glLinkProgramPROC        glLinkProgram;
+extern glGetProgramivPROC       glGetProgramiv;
+extern glGetProgramInfoLogPROC  glGetProgramInfoLog;
+extern glGetShaderInfoLogPROC   glGetShaderInfoLog;
+extern glGetIntegeri_vPROC      glGetIntegeri_v;
+extern glDetachShaderPROC       glDetachShader;
+extern glUseProgramPROC         glUseProgram;
+extern glBindImageTexturePROC   glBindImageTexture;
+extern glDispatchComputePROC    glDispatchCompute;
+extern glDeleteProgramPROC      glDeleteProgram;
+extern glDeleteShaderPROC       glDeleteShader;
+extern glMemoryBarrierPROC      glMemoryBarrier;
+
+typedef void (APIENTRY* glActiveTexturePROC)(GLenum texture);
+extern glActiveTexturePROC      glActiveTexture;
+typedef void (APIENTRY* glUniform1iPROC) (GLint location, GLint v0);
+extern glUniform1iPROC          glUniform1i;
+typedef void (APIENTRY* glUniform1fPROC) (GLint location, float v0);
+extern glUniform1fPROC          glUniform1f;
+typedef GLint (APIENTRY* glGetUniformLocationPROC) (GLuint program, const char* name);
+extern glGetUniformLocationPROC glGetUniformLocation;
+
+// Use instead of glTexture2D to create immutable texture
+typedef void (APIENTRY* glTextureStorage2DPROC) (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+extern glTextureStorage2DPROC glTextureStorage2D;
+
+typedef void (APIENTRY * glCreateTexturesPROC) (GLenum target, GLsizei n, GLuint* textures);
+extern glCreateTexturesPROC glCreateTextures;
+
+// - - - - - - - - - - - - - -
+//    GL memory extensions
+// - - - - - - - - - - - - - -
+//
+// https://registry.khronos.org/OpenGL/extensions/EXT/EXT_external_objects.txt
+// void CreateMemoryObjectsEXT(sizei n,	uint* memoryObjects);
+// void DeleteMemoryObjectsEXT(sizei n, const uint* memoryObjects);
+// void TexStorageMem2DEXT(enum target, sizei levels, enum internalFormat, sizei width,	sizei height, uint memory, uint64 offset);
+// https://registry.khronos.org/OpenGL/extensions/EXT/EXT_external_objects_win32.txt
+// void ImportMemoryWin32HandleEXT(uint memory, uint64 size, enum handleType, void* handle);
+// void ImportMemoryWin32NameEXT(uint memory, uint64 size, enum handleType,	const void* name);
+
+typedef void (APIENTRY* glCreateMemoryObjectsEXTPROC) (GLsizei n, GLuint* memoryObjects);
+extern glCreateMemoryObjectsEXTPROC glCreateMemoryObjectsEXT;
+
+typedef void (APIENTRY* glDeleteMemoryObjectsEXTPROC) (GLsizei n, const GLuint* memoryObjects);
+extern glDeleteMemoryObjectsEXTPROC glDeleteMemoryObjectsEXT;
+
+typedef void (APIENTRY* glTexStorageMem2DEXTPROC) (GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset);
+extern glTexStorageMem2DEXTPROC glTexStorageMem2DEXT;
+
+typedef void (APIENTRY* glTextureStorageMem2DEXTPROC) (GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset);
+extern glTextureStorageMem2DEXTPROC glTextureStorageMem2DEXT;
+
+typedef void (APIENTRY* glImportMemoryWin32HandleEXTPROC) (GLuint memory, GLuint64 size, GLenum handleType, void* handle);
+extern glImportMemoryWin32HandleEXTPROC glImportMemoryWin32HandleEXT;
+
+typedef void (APIENTRY* glBufferStorageMemEXTPROC) (GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset);
+extern glBufferStorageMemEXTPROC glBufferStorageMemEXT;
+
+typedef void (APIENTRY* glMemoryObjectParameterivEXTPROC) (GLuint memoryObject, GLenum pname, const GLint* params);
+extern glMemoryObjectParameterivEXTPROC glMemoryObjectParameterivEXT;
+
+typedef void (APIENTRY* glGetMemoryObjectParameterivEXTPROC) (GLuint memoryObject, GLenum pname, GLint* params);
+extern glGetMemoryObjectParameterivEXTPROC glGetMemoryObjectParameterivEXT;
+
+typedef GLboolean(APIENTRY* glIsMemoryObjectEXTPROC) (GLuint memoryObject);
+extern glIsMemoryObjectEXTPROC glIsMemoryObjectEXT;
+
+typedef void (APIENTRY* glCreateBuffersPROC) (GLsizei n, GLuint* buffers);
+extern glCreateBuffersPROC glCreateBuffers;
+
+typedef void (APIENTRY* glBindBufferBasePROC) (GLenum target, GLuint index, GLuint buffer);
+extern glBindBufferBasePROC glBindBufferBase;
+
+// TODO
+// Shader extensions
+#define GL_SHADER_STORAGE_BARRIER_BIT                 0x2000
+#define GL_SHADER_STORAGE_BUFFER                      0x90D2
+#define GL_SHADER_STORAGE_BUFFER_BINDING              0x90D3
+#define GL_SHADER_STORAGE_BUFFER_START                0x90D4
+#define GL_SHADER_STORAGE_BUFFER_SIZE                 0x90D5
+#define GL_STATIC_DRAW                                0x88E4
+#define GL_STATIC_READ                                0x88E5
+#define GL_STATIC_COPY                                0x88E6
+
+
+#ifndef GL_DEDICATED_MEMORY_OBJECT_EXT
+#define GL_DEDICATED_MEMORY_OBJECT_EXT                0x9581
+#endif
+
+#ifndef GL_PROTECTED_MEMORY_OBJECT_EXT                
+#define GL_PROTECTED_MEMORY_OBJECT_EXT                0x959B
+#endif
+
+// https://registry.khronos.org/OpenGL/extensions/EXT/EXT_external_objects_win32.txt
+// Accepted by the <handleType> parameter of ImportMemoryWin32HandleEXT(), ImportMemoryWin32NameEXT()
+#ifndef GL_HANDLE_TYPE_OPAQUE_WIN32_EXT
+#define GL_HANDLE_TYPE_OPAQUE_WIN32_EXT               0x9587
+#endif
+#ifndef GL_HANDLE_TYPE_OPAQUE_IMAGE_KMT_EXT
+#define GL_HANDLE_TYPE_OPAQUE_IMAGE_KMT_EXT           0x9588
+#endif
+#ifndef GL_HANDLE_TYPE_D3D12_TILEPOOL_EXT
+#define GL_HANDLE_TYPE_D3D12_TILEPOOL_EXT             0x9589
+#endif
+#ifndef GL_HANDLE_TYPE_D3D12_RESOURCE_EXT
+#define GL_HANDLE_TYPE_D3D12_RESOURCE_EXT             0x958A
+#endif
+#ifndef GL_HANDLE_TYPE_D3D11_IMAGE_EXT
+#define GL_HANDLE_TYPE_D3D11_IMAGE_EXT                0x958B
+#endif
+#ifndef GL_HANDLE_TYPE_D3D11_IMAGE_KMT_EXT
+#define GL_HANDLE_TYPE_D3D11_IMAGE_KMT_EXT            0x958C
+#endif
+
+
+//---------------------------
+// Context creation extension
+// https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
+//---------------------------
+typedef HGLRC (APIENTRY * PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
+extern PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+
+// Tokens accepted as an attribute name in <*attribList>:
+#define		WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
+#define		WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
+#define		WGL_CONTEXT_LAYER_PLANE_ARB             0x2093
+#define		WGL_CONTEXT_FLAGS_ARB                   0x2094
+#define		WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
+
+//	Accepted as bits in the attribute value for WGL_CONTEXT_FLAGS in <*attribList>:
+#ifndef WGL_CONTEXT_DEBUG_BIT_ARB
+#define		WGL_CONTEXT_DEBUG_BIT_ARB               0x0001
+#endif
+#ifndef WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB
+#define		WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
+#endif
+
+//	Accepted as bits in the attribute value for
+//	WGL_CONTEXT_PROFILE_MASK_ARB in <*attribList>:
+#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB          0x00000001
+#define		WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+
+//	New errors returned by GetLastError:
+#define		ERROR_INVALID_VERSION_ARB               0x2095
+#define		ERROR_INVALID_PROFILE_ARB               0x2096
+
+#endif // end GLEW
+
+//----------------
+// Local functions
+//----------------
+bool InitializeGlew();
+unsigned int loadGLextensions();
+bool loadInteropExtensions();
+bool loadFBOextensions();
+bool loadBLITextension();
+bool loadSwapExtensions();
+bool loadPBOextensions();
+bool loadCopyExtensions();
+bool loadGLmemoryExtensions();
+bool loadComputeShaderExtensions();
+bool loadContextExtension();
+bool isExtensionSupported(const char *extension);
+void ExtLog(ExtLogLevel level, const char* format, ...);
+
+#endif // end __spoutGLextensions__
+ 
+---------------------------------------- 
+SpoutLibrary.h 
+---------------------------------------- 
+// SpoutMessageBox(struct HWND__ *,char const *,char const *,unsigned int,
+// SpoutMessageBox(HWND *,char const *,char const *,unsigned int,
+//
+//	SpoutLibrary.dll
+//
+//	Spout SDK dll compatible with any C++ compiler
+//
+/*
+		Copyright (c) 2016-2025, Lynn Jarvis. All rights reserved.
+
+		Redistribution and use in source and binary forms, with or without modification, 
+		are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+		EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+		IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+		PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+		INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+		LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+
+#ifdef _MSC_VER
+#pragma warning(disable : 26433) // Function should be marked with 'override'
+#endif
+
+// for definitions
+#include <windows.h>
+#include <string>
+#include <vector>
+#include <dxgiformat.h> // for DXGI_FORMAT enum
+#include <d3d11.h> // For ID3D11Texture2D
+
+// Define here to avoid include of GL.h 
+typedef int GLint;
+typedef unsigned int GLuint;
+typedef unsigned int GLenum;
+
+#ifndef GL_RGBA
+#define GL_RGBA 0x1908
+#endif
+#ifndef GL_BGRA
+#define GL_BGRA 0x80E1
+#endif
+#ifndef GL_BGRA_EXT
+#define GL_BGRA_EXT 0x80E1
+#endif
+
+#define SPOUTLIBRARY_EXPORTS // defined for this DLL. The application imports rather than exports
+
+#ifdef SPOUTLIBRARY_EXPORTS
+#define SPOUTAPI __declspec(dllexport)
+#else
+#define SPOUTAPI __declspec(dllimport)
+#endif
+
+// Local log level definitions for SetSpoutLogLevel.
+// "SpoutLogLevel" enum conflicts with previous definition
+// in SpoutUtils if it is used in the application.
+// Change enum name to "SpoutLibLogLevel".
+//
+// Option : disable warning C26812 (unscoped enums) for Visual Studio.
+//
+// Use of C++11 scoped (class) enums are not compatible with early compilers (< VS2012 and others).
+// For Visual Studio, this warning is designated "Prefer" and "C" standard unscoped enums are
+// therefore retained for compatibility. The warning can be enabled or disabled here.
+//
+#ifdef _MSC_VER
+#pragma warning(disable:26812)
+#endif
+
+//
+enum SpoutLibLogLevel {
+	SPOUT_LOG_SILENT,
+	SPOUT_LOG_VERBOSE,
+	SPOUT_LOG_NOTICE,
+	SPOUT_LOG_WARNING,
+	SPOUT_LOG_ERROR,
+	SPOUT_LOG_FATAL,
+	SPOUT_LOG_NONE
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// COM-Like abstract interface.
+// This interface doesn't require __declspec(dllexport/dllimport) specifier.
+// Method calls are dispatched via virtual table.
+// Any C++ compiler can use it.
+// Instances are obtained via factory function.
+//
+
+struct SPOUTLIBRARY
+{
+
+	//
+	// Sender
+	//
+
+	virtual void SetSenderName(const char* sendername = nullptr) = 0;
+	// Set the sender DX11 shared texture format
+	virtual void SetSenderFormat(DWORD dwFormat) = 0;
+	// Close sender and free resources
+	//   A sender is created or updated by all sending functions
+	virtual void ReleaseSender(DWORD dwMsec = 0) = 0;
+	// Send texture attached to fbo
+	//   The fbo must be currently bound
+	//   The sending texture can be larger than the size that the sender is set up for
+	//   For example, if the application is using only a portion of the allocated texture space,  
+	//   such as for Freeframe plugins. (The 2.006 equivalent is DrawToSharedTexture)
+	//   To send the OpenGL default framebuffer, specify "0" for the fbo ID, width and height.
+	virtual bool SendFbo(GLuint FboID, unsigned int width, unsigned int height, bool bInvert = true) = 0;
+	// Send OpenGL texture
+	virtual bool SendTexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = true, GLuint HostFBO = 0) = 0;
+	// Send image pixels
+	virtual bool SendImage(const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false) = 0;
+	// Sender status
+	virtual bool IsInitialized() = 0;
+	// Sender name
+	virtual const char* GetName() = 0;
+	// Sender width
+	virtual unsigned int GetWidth() = 0;
+	// Sender height
+	virtual unsigned int GetHeight() = 0;
+	// Sender frame rate
+	virtual double GetFps() = 0;
+	// Sender frame number
+	virtual long GetFrame() = 0;
+	// Sender share handle
+	virtual HANDLE GetHandle() = 0;
+	// Sender sharing method
+	virtual bool GetCPU() = 0;
+	// Sender GL/DX hardware compatibility
+	virtual bool GetGLDX() = 0;
+
+	//
+	// Receiver
+	//
+
+	// Specify sender for connection
+	//   If a name is specified, the receiver will not connect to any other unless the user selects one
+	//   If that sender closes, the receiver will wait for the nominated sender to open 
+	//   If no name is specified, the receiver will connect to the active sender
+	virtual void SetReceiverName(const char* SenderName = nullptr) = 0;
+	// Get sender for connection
+	virtual bool GetReceiverName(char* SenderName, int maxchars = 256) = 0;
+	// Close receiver and release resources ready to connect to another sender
+	virtual void ReleaseReceiver() = 0;
+	// Receive texture
+	//   If no arguments, connect to a sender and retrieve texture details ready for access
+	//	 (see BindSharedTexture and UnBindSharedTexture)
+	// 	 Connect to a sender and inform the application to update
+	//   the receiving texture if it has changed dimensions
+	//   For no change, copy the sender shared texture to the application texture
+	virtual bool ReceiveTexture(GLuint TextureID = 0, GLuint TextureTarget = 0, bool bInvert = false, GLuint HostFbo = 0) = 0;
+	// Receive image pixels
+	//   Connect to a sender and inform the application to update
+	//   the receiving buffer if it has changed dimensions
+	//   For no change, copy the sender shared texture to the pixel buffer
+	virtual bool ReceiveImage(unsigned char *pixels, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFbo = 0) = 0;
+	// Query whether the sender has changed
+	//   Checked at every cycle before receiving data
+	virtual bool IsUpdated() = 0;
+	// Query sender connection
+	//   If the sender closes, receiving functions return false,  
+	virtual bool IsConnected() = 0;
+	// Query received frame status
+	//   The receiving texture or pixel buffer is only refreshed if the sender has produced a new frame  
+	//   This can be queried to process texture data only for new frames
+	virtual bool IsFrameNew() = 0;
+	// Get sender name
+	virtual const char* GetSenderName() = 0;
+	// Get sender width
+	virtual unsigned int GetSenderWidth() = 0;
+	// Get sender height
+	virtual unsigned int GetSenderHeight() = 0;
+	// Get sender DirectX texture format
+	virtual DWORD GetSenderFormat() = 0;
+	// Get sender frame rate
+	virtual double GetSenderFps() = 0;
+	// Get sender frame number
+	virtual long GetSenderFrame() = 0;
+	// Received sender share handle
+	virtual HANDLE GetSenderHandle() = 0;
+	// Received sender texture
+	virtual ID3D11Texture2D* GetSenderTexture() = 0;
+	// Received sender sharing mode
+	virtual bool GetSenderCPU() = 0;
+	// Received sender GL/DX compatibility
+	virtual bool GetSenderGLDX() = 0;
+	// The path of the host that produced the sender
+	virtual bool GetHostPath(const char* sendername, char* hostpath, int maxchars) = 0;
+	// Return a list of current senders
+	virtual std::vector<std::string> GetSenderList() = 0;
+	// Open sender selection dialog
+	virtual void SelectSender(HWND hwnd = NULL) = 0;
+	// Open sender selection dialog with optional message - 2.006 compatibility
+	virtual void SelectSenderPanel(const char* message) = 0;
+
+	//
+	// Frame count
+	//
+
+	// Enable or disable frame counting globally
+	virtual void SetFrameCount(bool bEnable) = 0;
+	// Disable frame counting specifically for this application
+	virtual void DisableFrameCount() = 0;
+	// Return frame count status
+	virtual bool IsFrameCountEnabled() = 0;
+	// Sender frame rate control
+	virtual void HoldFps(int fps) = 0;
+	// Get system refresh rate
+	virtual double GetRefreshRate() = 0;
+	// Signal sync event 
+	virtual void SetFrameSync(const char* SenderName) = 0;
+	// Wait or test for a sync event
+	virtual bool WaitFrameSync(const char *SenderName, DWORD dwTimeout = 0) = 0;
+	// Enable / disable frame sync
+	virtual void EnableFrameSync(bool bSync = true) = 0;
+	// Close frame sync
+	virtual void CloseFrameSync() = 0;
+	// Check for frame sync option
+	virtual bool IsFrameSyncEnabled() = 0;
+	// Vertical sync status
+	virtual int GetVerticalSync() = 0;
+	// Lock to monitor vertical sync
+	virtual bool SetVerticalSync(bool bSync = true) = 0;
+
+	//
+	// Data sharing
+	//
+
+	// Write data
+	virtual bool WriteMemoryBuffer(const char *sendername, const char* data, int length) = 0;
+	// Read data
+	virtual int  ReadMemoryBuffer(const char* sendername, char* data, int maxlength) = 0;
+	// Create a shared memory buffer
+	virtual bool CreateMemoryBuffer(const char *name, int length) = 0;
+	// Delete a shared memory buffer
+	virtual bool DeleteMemoryBuffer() = 0;
+	// Get the number of bytes available for data transfer
+	virtual int GetMemoryBufferSize(const char *name) = 0;
+
+	//
+	// Log utilities
+	//
+
+	// Open console for debugging
+	virtual void OpenSpoutConsole() = 0;
+	// Close console
+	virtual void CloseSpoutConsole(bool bWarning = false) = 0;
+	// Enable spout log to the console
+	virtual void EnableSpoutLog() = 0;
+	// Enable spout log to a file with optional append
+	virtual void EnableSpoutLogFile(const char* filename, bool bappend = false) = 0;
+	// Disable logging to file
+	virtual void DisableSpoutLogFile() = 0;
+	// Remove a log file
+	virtual void RemoveSpoutLogFile(const char* filename = nullptr) = 0;
+	// Disable logging to console and file
+	virtual void DisableSpoutLog() = 0;
+	// Disable logging temporarily
+	virtual void DisableLogs() = 0;
+	// Enable logging again
+	virtual void EnableLogs() = 0;
+	// Are console logs enabled
+	virtual bool LogsEnabled() = 0;
+	// Is file logging enabled
+	virtual bool LogFileEnabled() = 0;
+	// Return the full log file path
+	virtual std::string GetSpoutLogPath() = 0;
+	// Return the log file as a string
+	virtual std::string GetSpoutLog() = 0;
+	// Show the log file folder in Windows Explorer
+	virtual void ShowSpoutLogs() = 0;
+
+	// Set the current log level
+	// SPOUT_LOG_SILENT  - Disable all messages
+	// SPOUT_LOG_VERBOSE - Show all messages
+	// SPOUT_LOG_NOTICE  - Show information messages - default
+	// SPOUT_LOG_WARNING - Something might go wrong
+	// SPOUT_LOG_ERROR   - Something did go wrong
+	// SPOUT_LOG_FATAL   - Something bad happened
+	virtual void SetSpoutLogLevel(SpoutLibLogLevel level) = 0;
+	// General purpose log
+	virtual void SpoutLog(const char* format, ...) = 0;
+	// Verbose - show log for SPOUT_LOG_VERBOSE or above
+	virtual void SpoutLogVerbose(const char* format, ...) = 0;
+	// Notice - show log for SPOUT_LOG_NOTICE or above
+	virtual void SpoutLogNotice(const char* format, ...) = 0;
+	// Warning - show log for SPOUT_LOG_WARNING or above
+	virtual void SpoutLogWarning(const char* format, ...) = 0;
+	// Error - show log for SPOUT_LOG_ERROR or above
+	virtual void SpoutLogError(const char* format, ...) = 0;
+	// Fatal - always show log
+	virtual void SpoutLogFatal(const char* format, ...) = 0;
+
+	//
+	// MessageBox dialog
+	//
+
+	// MessageBox dialog with optional timeout
+	//   Used where a Windows MessageBox would interfere with the application GUI
+	//   The dialog closes itself if a timeout is specified
+	virtual int SpoutMessageBox(const char* message, DWORD dwMilliseconds = 0) = 0;
+	// MessageBox dialog with variable arguments
+	virtual int SpoutMessageBox(const char* caption, const char* format, ...) = 0;
+	// MessageBox with variable arguments and icon, buttons
+	virtual int SpoutMessageBox(const char* caption, UINT uType, const char* format, ...) = 0;
+	// MessageBox dialog with standard arguments
+	//   Replaces an existing MessageBox call
+	virtual int SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType, DWORD dwMilliseconds = 0) = 0;
+	// MessageBox dialog with standard arguments
+	//   including taskdialog main instruction large text
+	virtual int SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption,  UINT uType, const char* instruction, DWORD dwMilliseconds = 0) = 0;
+	// MessageBox dialog with an edit control for text input
+	virtual int SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType, std::string& text) = 0;
+	// MessageBox dialog with a combobox control for item selection
+	virtual	int SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType, std::vector<std::string> items, int& selected) = 0;
+
+	// Custom icon for SpoutMessageBox from resources
+	virtual void SpoutMessageBoxIcon(HICON hIcon) = 0;
+	// Custom icon for SpoutMessageBox from file
+	virtual bool SpoutMessageBoxIcon(std::string iconfile) = 0;
+	// Custom button for SpoutMessageBox
+	virtual void SpoutMessageBoxButton(int ID, std::wstring title) = 0;
+	// Activate modeless mode using SpoutPanel.exe
+	virtual void SpoutMessageBoxModeless(bool bMode = true) = 0;
+	// Window handle for SpoutMessageBox where not specified
+	virtual void SpoutMessageBoxWindow(HWND hWnd) = 0;
+	// Position to point SpoutMessageBox
+	virtual void SpoutMessageBoxPosition(POINT pt) = 0;
+	// Copy text to the clipboard
+	virtual bool CopyToClipBoard(HWND hwnd, const char* caps) = 0;
+	// Open logs folder
+	virtual bool OpenSpoutLogs() = 0;
+
+	//
+	// Registry utilities
+	//
+	// Read subkey DWORD value
+	virtual bool ReadDwordFromRegistry(HKEY hKey, const char *subkey, const char *valuename, DWORD *pValue) = 0;
+	// Write subkey DWORD value
+	virtual bool WriteDwordToRegistry(HKEY hKey, const char *subkey, const char *valuename, DWORD dwValue) = 0;
+	// Read subkey character string
+	virtual bool ReadPathFromRegistry(HKEY hKey, const char *subkey, const char *valuename, char *filepath) = 0;
+	// Write subkey character string
+	virtual bool WritePathToRegistry(HKEY hKey, const char *subkey, const char *valuename, const char *filepath) = 0;
+	// Write subkey binary hex data string
+	virtual bool WriteBinaryToRegistry(HKEY hKey, const char* subkey, const char* valuename, const unsigned char* hexdata, DWORD nchars) = 0;
+	// Remove subkey value name
+	virtual bool RemovePathFromRegistry(HKEY hKey, const char *subkey, const char *valuename) = 0;
+	// Delete a subkey and its values.
+	//   It must be a subkey of the key that hKey identifies, but it cannot have subkeys.  
+	//   Note that key names are not case sensitive.  
+	virtual bool RemoveSubKey(HKEY hKey, const char *subkey) = 0;
+	// Find subkey
+	virtual bool FindSubKey(HKEY hKey, const char *subkey) = 0;
+
+	//
+	// Information
+	//
+	// Get SDK version number string e.g. "2.007.000"
+	// Optional - return as a single number
+	virtual std::string GetSDKversion(int* pNumber = nullptr) = 0;
+	// Computer type
+	virtual bool IsLaptop() = 0;
+	// Get the module handle of an executable or dll
+	virtual HMODULE GetCurrentModule() = 0;
+	// Get executable or dll version
+	virtual std::string GetExeVersion(const char* path) = 0;
+	// Get executable or dll path
+	virtual std::string GetExePath(bool bFull = false) = 0;
+	// Get executable or dll name
+	virtual std::string GetExeName() = 0;
+	// Remove file name and return the path
+	virtual std::string GetPath(std::string fullpath) = 0;
+	// Remove path and return the file name
+	virtual std::string GetName(std::string fullpath) = 0;
+
+	//
+	// Timing utilities
+	//
+	// Start timing period
+	virtual void StartTiming() = 0;
+
+	// Stop timing and return milliseconds or microseconds elapsed.
+	// (microseconds default).
+	virtual double EndTiming(bool microseconds = false, bool bPrint = false) = 0;
+
+	// -----------------------------------------
+	// Bind OpenGL shared texture
+	virtual bool BindSharedTexture() = 0;
+	// Un-bind OpenGL shared texture
+	virtual bool UnBindSharedTexture() = 0;
+	// OpenGL shared texture ID
+	virtual GLuint GetSharedTextureID() = 0;
+
+	//
+	// Sender names
+	//
+
+	// Number of senders
+	virtual int GetSenderCount() = 0;
+	// Sender item name
+	virtual bool GetSender(int index, char* sendername, int MaxSize = 256) = 0;
+	// Find a sender in the list
+	virtual bool FindSenderName(const char* sendername) = 0;
+	// Sender information
+	virtual bool GetSenderInfo(const char* sendername, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle, DWORD &dwFormat) = 0;
+	// Current active sender
+	virtual bool GetActiveSender(char* Sendername) = 0;
+	// Set sender as active
+	virtual bool SetActiveSender(const char* Sendername) = 0;
+	
+	//
+	// Get user registry settings recorded by "SpoutSettings"
+	// Set them either to the registry or for the application only
+	//
+
+	// Get user buffering mode
+	virtual bool GetBufferMode() = 0;
+	// Set application buffering mode
+	virtual void SetBufferMode(bool bActive = true) = 0;
+	// Get user number of pixel buffers
+	virtual int GetBuffers() = 0;
+	// Set application number of pixel buffers
+	virtual void SetBuffers(int nBuffers) = 0;
+	// Get user Maximum senders allowed
+	virtual int GetMaxSenders() = 0;
+	// Set user Maximum senders allowed
+	virtual void SetMaxSenders(int maxSenders) = 0;
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Create a sender
+	virtual bool CreateSender(const char *Sendername, unsigned int width, unsigned int height, DWORD dwFormat = 0) = 0;
+	// Update a sender
+	virtual bool UpdateSender(const char* Sendername, unsigned int width, unsigned int height) = 0;
+	// Create receiver connection
+	virtual bool CreateReceiver(char* Sendername, unsigned int &width, unsigned int &height) = 0;
+	// Check receiver connection
+	virtual bool CheckReceiver(char* Sendername, unsigned int &width, unsigned int &height, bool &bConnected) = 0;
+	// Get user DX9 mode
+	virtual bool GetDX9() = 0;
+	// Set user DX9 mode
+	virtual bool SetDX9(bool bDX9 = true) = 0;
+	// Get user memory share mode
+	virtual bool GetMemoryShareMode() = 0;
+	// Set user memory share mode
+	virtual bool SetMemoryShareMode(bool bMem = true) = 0;
+	// Get user CPU mode
+	virtual bool GetCPUmode() = 0;
+	// Set user CPU mode
+	virtual bool SetCPUmode(bool bCPU) = 0;
+	// Get user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	virtual int GetShareMode() = 0;
+	// Set user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	virtual void SetShareMode(int mode) = 0;
+
+	//
+	// Graphics compatibility
+	//
+
+	// Get auto GPU/CPU share depending on compatibility
+	virtual bool GetAutoShare() = 0;
+	// Set auto GPU/CPU share depending on compatibility
+	virtual void SetAutoShare(bool bAuto = true) = 0;
+	// OpenGL texture share compatibility
+	virtual bool IsGLDXready() = 0;
+
+	//
+	// Adapter functions
+	//
+
+	// The number of graphics adapters in the system
+	virtual int GetNumAdapters() = 0;
+	// Adapter item name
+	virtual bool GetAdapterName(int index, char *adaptername, int maxchars) = 0;
+	// Return current adapter name
+	virtual char* AdapterName() = 0;
+	// Get adapter index 
+	virtual int GetAdapter() = 0;
+	// Get the description and output display name of the current adapter
+	virtual bool GetAdapterInfo(char* description, char* output, int maxchars = 0) = 0;
+	// Get the description and output display name for a given adapter
+	virtual bool GetAdapterInfo(int index, char* description, char* output, int maxchars = 0) = 0;
+
+	//
+	// Graphics preference
+	//
+	// Windows 10+ SDK required
+	//
+#ifdef NTDDI_WIN10_RS4
+
+	// Get the Windows graphics preference for an application
+	//	-1 - Not registered
+	//	 0 - Let Windows decide  DXGI_GPU_PREFERENCE_UNSPECIFIED
+	//	 1 - Power saving        DXGI_GPU_PREFERENCE_MINIMUM_POWER
+	//	 2 - High performance    DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE
+	virtual int GetPerformancePreference(const char* path) = 0;
+	// Set the Windows graphics preference for an application
+	virtual bool SetPerformancePreference(int preference, const char* path) = 0;
+	// Get the graphics adapter name for a Windows preference
+	virtual bool GetPreferredAdapterName(int preference, char* adaptername, int maxchars) = 0;
+	// Set graphics adapter index for a Windows preference
+	virtual bool SetPreferredAdapter(int preference) = 0;
+	// Availability of Windows graphics preference
+	virtual bool IsPreferenceAvailable() = 0;
+	// Is the path a valid application
+	virtual bool IsApplicationPath(const char* path) = 0;
+#endif
+
+
+	//
+	// OpenGL utilities
+	//
+
+	// Create an OpenGL window and context for situations where there is none.
+	//   Not used if applications already have an OpenGL context.
+	//   Always call CloseOpenGL afterwards.
+	virtual bool CreateOpenGL() = 0;
+	// Close OpenGL window
+	virtual bool CloseOpenGL() = 0;
+	// Copy OpenGL texture with optional invert
+	//   Textures can be different sizes
+	virtual bool CopyTexture(GLuint SourceID, GLuint SourceTarget,
+		GLuint DestID, GLuint DestTarget,
+		unsigned int width, unsigned int height,
+		bool bInvert = false, GLuint HostFBO = 0) = 0;
+	// Copy OpenGL texture data to a pixel buffer
+	virtual bool ReadTextureData(GLuint SourceID, GLuint SourceTarget,
+		void* data, unsigned int width, unsigned int height, unsigned int rowpitch,
+		GLenum dataformat, GLenum datatype, bool bInvert = false, GLuint HostFBO = false) = 0;
+
+	//
+	// Formats
+	//
+
+	// Get sender DX11 shared texture format
+	virtual DXGI_FORMAT GetDX11format() = 0;
+	// Set sender DX11 shared texture format
+	virtual void SetDX11format(DXGI_FORMAT textureformat) = 0;
+	// Return OpenGL compatible DX11 format
+	virtual DXGI_FORMAT DX11format(GLint glformat) = 0;
+	// Return DX11 compatible OpenGL format
+	virtual GLint GLDXformat(DXGI_FORMAT textureformat = DXGI_FORMAT_UNKNOWN) = 0;
+	// Return OpenGL texture internal format
+	virtual int GLformat(GLuint TextureID, GLuint TextureTarget) = 0;
+	// Return OpenGL texture format description
+	virtual std::string GLformatName(GLint glformat = 0) = 0;
+
+	//
+	// DirectX utilities
+	//
+
+	virtual bool OpenDirectX() = 0;
+	virtual void CloseDirectX() = 0;
+
+	// Initialize and prepare DirectX 11
+	virtual bool OpenDirectX11(void * pDevice = nullptr) = 0;
+	virtual void CloseDirectX11() = 0;
+
+	// Return the class device
+	virtual void* GetDX11Device() = 0;
+
+	// Return the class context
+	virtual void* GetDX11Context() = 0;
+	
+	// Library release function
+    virtual void Release() = 0;
+
+};
+
+// Handle type. In C++ language the interface type is used.
+typedef SPOUTLIBRARY* SPOUTHANDLE;
+
+// Factory function that creates an instance of the SPOUT object.
+extern "C" SPOUTAPI SPOUTHANDLE WINAPI GetSpout(VOID);
+
+////////////////////////////////////////////////////////////////////////////////
+ 
+---------------------------------------- 
+SpoutReceiver.h 
+---------------------------------------- 
+/*
+
+					SpoutReceiver.h
+
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+
+#ifndef __SpoutReceiver__
+#define __SpoutReceiver__
+
+#include "Spout.h"
+
+class SPOUT_DLLEXP SpoutReceiver {
+
+	public:
+
+	SpoutReceiver();
+    ~SpoutReceiver();
+
+	// Specify sender for connection
+	//   The application will not connect to any other  unless the user selects one
+	//   If that sender closes, the application will wait for the nominated sender to open 
+	//   If no name is specified, the receiver will connect to the active sender
+	void SetReceiverName(const char* sendername = nullptr);
+	// Get sender for connection
+	bool GetReceiverName(char* SenderName, int maxchars = 256);
+	// Close receiver and release resources ready to connect to another sender
+	void ReleaseReceiver();
+	// Receive shared texture
+	//   Connect to a sender and retrieve texture details ready for access
+	//	 (see BindSharedTexture and UnBindSharedTexture)
+	bool ReceiveTexture();
+	// Receive OpenGL texture
+	// 	 Connect to a sender and inform the application to update
+	//   the receiving texture if it has changed dimensions
+	//   For no change, copy the sender shared texture to the application texture
+	bool ReceiveTexture(GLuint TextureID, GLuint TextureTarget, bool bInvert = false, GLuint HostFbo = 0);
+	// Receive image pixels
+	//   Connect to a sender and inform the application to update
+	//   the receiving buffer if it has changed dimensions
+	//   For no change, copy the sender shared texture to the pixel buffer
+	bool ReceiveImage(unsigned char* pixels, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFbo = 0);
+	// Query whether the sender has changed
+	//   Checked at every cycle before receiving data
+	bool IsUpdated();
+	// Query sender connection
+	//   If the sender closes, receiving functions return false,  
+	bool IsConnected();
+	// Query received frame status
+	//   The receiving texture or pixel buffer is only refreshed if the sender has produced a new frame  
+	//   This can be queried to process texture data only for new frames
+	bool IsFrameNew();
+	// Received sender name
+	const char* GetSenderName();
+	// Received sender width
+	unsigned int GetSenderWidth();
+	// Received sender height
+	unsigned int GetSenderHeight();
+	// Received sender DX11 texture format
+	DWORD GetSenderFormat();
+	// Received sender frame rate
+	double GetSenderFps();
+	// Received sender frame number
+	long GetSenderFrame();
+	// Received sender share handle
+	HANDLE GetSenderHandle();
+	// Received sender texture
+	ID3D11Texture2D* GetSenderTexture();
+	// Received sender sharing method
+	bool GetSenderCPU();
+	// Received sender GL/DX hardware compatibility
+	bool GetSenderGLDX();
+	// Return a list of current senders
+	std::vector<std::string> GetSenderList();
+	// Open sender selection dialog
+	bool SelectSender(HWND hwnd = NULL);
+
+	//
+	// Frame count
+	//
+
+	// Enable or disable frame counting globally
+	void SetFrameCount(bool bEnable);
+	// Disable frame counting specifically for this application
+	void DisableFrameCount();
+	// Return frame count status
+	bool IsFrameCountEnabled();
+	// Frame rate control
+	void HoldFps(int fps);
+	// Signal sync event 
+	void SetFrameSync(const char* SenderName);
+	// Wait or test for a sync event
+	bool WaitFrameSync(const char* SenderName, DWORD dwTimeout = 0);
+	// Enable / disable frame sync
+	void EnableFrameSync(bool bSync = true);
+	// Close frame sync
+	void CloseFrameSync();
+	// Check for frame sync option
+	bool IsFrameSyncEnabled();
+
+	//
+	// Data sharing
+	//
+
+	// Read data
+	int ReadMemoryBuffer(const char* name, char* data, int maxlength);
+	// Get the size of a shared memory buffer
+	int GetMemoryBufferSize(const char* name);
+
+	//
+	// OpenGL shared texture access
+	//
+
+	// Bind OpenGL shared texture
+	bool BindSharedTexture();
+	// Un-bind OpenGL shared texture
+	bool UnBindSharedTexture();
+	// OpenGL shared texture ID
+	GLuint GetSharedTextureID();
+
+	//
+	// Graphics compatibility
+	//
+
+	// Get user auto GPU/CPU share
+	bool GetAutoShare();
+	// Set application auto GPU/CPU share
+	void SetAutoShare(bool bAuto = true);
+	// Get user CPU share
+	bool GetCPUshare();
+	// Set application CPU share
+	// (re-test GL/DX compatibility if set to false)
+	void SetCPUshare(bool bCPU = true);
+	// OpenGL texture share compatibility
+	bool IsGLDXready();
+
+	//
+	// Sender names
+	//
+
+	// Number of senders
+	int GetSenderCount();
+	// Sender item name
+	bool GetSender(int index, char* sendername, int MaxSize = 256);
+	// Sender information
+	bool GetSenderInfo(const char* sendername, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle, DWORD &dwFormat);
+	// Current active sender
+	bool GetActiveSender(char* sendername);
+	// Set sender as active
+	bool SetActiveSender(const char* sendername);
+
+	//
+	// Adapter functions
+	//
+
+	// The number of graphics adapters in the system
+	int GetNumAdapters();
+	// Get adapter item name
+	bool GetAdapterName(int index, char* adaptername, int maxchars = 256);
+	// Current adapter name
+	char* AdapterName();
+	// Get current adapter index
+	int GetAdapter();
+	// Get the description and output display name of the current adapter
+	bool GetAdapterInfo(char* description, char* output, int maxchars);
+	// Get the description and output display name for a given adapter
+	bool GetAdapterInfo(int index, char* description, char* output, int maxchars);
+	// Windows 10 Vers 1803, build 17134 or later
+#ifdef NTDDI_WIN10_RS4
+	// Get the Windows graphics preference for an application
+	int GetPerformancePreference(const char* path = nullptr);
+	// Set the Windows graphics preference for an application
+	bool SetPerformancePreference(int preference, const char* path = nullptr);
+	// Get the graphics adapter name for a Windows preference
+	bool GetPreferredAdapterName(int preference, char* adaptername, int maxchars);
+	// Set graphics adapter index for a Windows preference
+	bool SetPreferredAdapter(int preference);
+	// Availability of Windows graphics preference
+	bool IsPreferenceAvailable();
+	// Is the path a valid application
+	bool IsApplicationPath(const char* path);
+#endif
+
+	//
+	// User settings recorded by "SpoutSettings"
+	//
+
+	// Get user buffering mode
+	bool GetBufferMode();
+	// Set application buffering mode
+	void SetBufferMode(bool bActive = true);
+	// Get user number of pixel buffers
+	int GetBuffers();
+	// Set application number of pixel buffers
+	void SetBuffers(int nBuffers);
+	// Get user Maximum senders allowed
+	int GetMaxSenders();
+	// Set user Maximum senders allowed
+	void SetMaxSenders(int maxSenders);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Get user DX9 mode
+	bool GetDX9();
+	// Set user DX9 mode
+	bool SetDX9(bool bDX9 = true);
+	// Get user memory share mode
+	bool GetMemoryShareMode();
+	// Set user memory share mode
+	bool SetMemoryShareMode(bool bMem = true);
+	// Get user CPU mode
+	bool GetCPUmode();
+	// Set user CPU mode
+	bool SetCPUmode(bool bCPU);
+	// Get user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	int GetShareMode();
+	// Set user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	void SetShareMode(int mode);
+
+	//
+	// Information
+	//
+
+	// The path of the host that produced the sender
+	bool GetHostPath(const char* sendername, char* hostpath, int maxchars);
+	// Vertical sync status
+	int GetVerticalSync();
+	// Lock to monitor vertical sync
+	//   1 - wait for 1 cycle vertical refresh
+	//   0 - buffer swaps are not synchronized to a video frame
+	//  -1 - adaptive vsync
+	bool SetVerticalSync(bool bSync = true);
+	// Get SDK version number string e.g. "2.007.000"
+	// Optional - return as a single number
+	std::string GetSDKversion(int* pNumber = nullptr);
+
+	//
+	// OpenGL utilities
+	//
+
+	// Create an OpenGL window and context for situations where there is none.
+	//   Not used if applications already have an OpenGL context.
+	//   Always call CloseOpenGL afterwards.
+	bool CreateOpenGL();
+	// Close OpenGL window
+	bool CloseOpenGL();
+	// Copy OpenGL texture with optional invert
+	//   Textures can be different sizes
+	bool CopyTexture(GLuint SourceID, GLuint SourceTarget,
+		GLuint DestID, GLuint DestTarget,
+		unsigned int width, unsigned int height,
+		bool bInvert = false, GLuint HostFBO = 0);
+	// Copy OpenGL texture data to a pixel buffer
+	bool ReadTextureData(GLuint SourceID, GLuint SourceTarget,
+		void* data, unsigned int width, unsigned int height, unsigned int rowpitch,
+		GLenum dataformat, GLenum datatype, bool bInvert = false, GLuint HostFBO = false);
+
+	//
+	// Formats
+	//
+
+	// Get sender DX11 shared texture format
+	DXGI_FORMAT GetDX11format();
+	// Set sender DX11 shared texture format
+	void SetDX11format(DXGI_FORMAT textureformat);
+	// Return OpenGL compatible DX11 format
+	DXGI_FORMAT DX11format(GLint glformat);
+	// Return DX11 compatible OpenGL format
+	GLint GLDXformat(DXGI_FORMAT textureformat = DXGI_FORMAT_UNKNOWN);
+	// Return OpenGL texture internal format
+	GLint GLformat(GLuint TextureID, GLuint TextureTarget);
+	// Return OpenGL texture format description
+	std::string GLformatName(GLint glformat = 0);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Create receiver connection
+	bool CreateReceiver(char* Sendername, unsigned int &width, unsigned int &height);
+	// Check receiver connection
+	bool CheckReceiver(char* Sendername, unsigned int &width, unsigned int &height, bool &bConnected);
+	// Receive OpenGL texture
+	bool ReceiveTexture(char* Sendername, unsigned int &width, unsigned int &height, GLuint TextureID = 0, GLuint TextureTarget = 0, bool bInvert = false, GLuint HostFBO = 0);
+	// Receive image pixels
+	bool ReceiveImage(char* Sendername, unsigned int &width, unsigned int &height, unsigned char* pixels, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	// Open dialog for the user to select a sender
+	//   Optional message argument
+	bool SelectSenderPanel(const char* message = nullptr);
+	// Receiver detect sender selection
+	bool CheckSenderPanel(char* sendername, int maxchars = 256);
+
+
+	// Legacy OpenGL Draw function
+	// See _SpoutCommon.h_ #define legacyOpenGL
+#ifdef legacyOpenGL
+	// Render the shared texture
+	bool DrawSharedTexture(float max_x = 1.0, float max_y = 1.0, float aspect = 1.0, bool bInvert = true, GLuint HostFBO = 0);
+#endif
+
+	// For access to all functions
+	Spout spout;
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutSender.h 
+---------------------------------------- 
+/*
+
+					SpoutSender.h
+
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+#pragma once
+
+#ifndef __SpoutSender__
+#define __SpoutSender__
+
+#include "Spout.h"
+
+class SPOUT_DLLEXP SpoutSender {
+
+	public:
+
+	SpoutSender();
+    ~SpoutSender();
+
+	// Set name for sender creation
+	//   If no name is specified, the executable name is used.  
+	void SetSenderName(const char* sendername = nullptr);
+	// Set the sender DX11 shared texture format
+	void SetSenderFormat(DWORD dwFormat);
+	// Close sender and free resources
+	//   A sender is created or updated by all sending functions
+	void ReleaseSender();
+
+	// Send OpenGL framebuffer
+	//   The fbo must be bound for read.
+	//   The sending texture can be larger than the size that the sender is set up for
+	//   For example, if the application is using only a portion of the allocated texture space,  
+	//   such as for Freeframe plugins. (The 2.006 equivalent is DrawToSharedTexture)
+	//   To send the default OpenGL framebuffer, specify FboID = 0.
+	//   If width and height are also 0, the function determines the viewport size.
+	bool SendFbo(GLuint FboID, unsigned int width, unsigned int height, bool bInvert = true);
+	// Send OpenGL texture
+	bool SendTexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, bool bInvert = true, GLuint HostFBO = 0);
+	// Send image pixels
+	bool SendImage(const unsigned char* pixels, unsigned int width, unsigned int height, GLenum glFormat = GL_RGBA, bool bInvert = false, GLuint HostFBO = 0);
+	// Sender status
+	bool IsInitialized();
+	// Sender name
+	const char* GetName();
+	// Sender width
+	unsigned int GetWidth();
+	// Sender height
+	unsigned int GetHeight();
+	// Sender frame rate
+	double GetFps();
+	// Sender frame number
+	long GetFrame();
+	// Sender share handle
+	HANDLE GetHandle();
+	// Sender sharing method
+	bool GetCPU();
+	// Sender GL/DX hardware compatibility
+	bool GetGLDX();
+
+	//
+	// Frame count
+	//
+
+	// Enable or disable frame counting globally
+	void SetFrameCount(bool bEnable);
+	// Disable frame counting specifically for this application
+	void DisableFrameCount();
+	// Return frame count status
+	bool IsFrameCountEnabled();
+	// Frame rate control
+	void HoldFps(int fps);
+	// Signal sync event 
+	void SetFrameSync(const char* SenderName);
+	// Wait or test for a sync event
+	bool WaitFrameSync(const char* SenderName, DWORD dwTimeout = 0);
+	// Enable / disable frame sync
+	void EnableFrameSync(bool bSync = true);
+	// Close frame sync
+	void CloseFrameSync();
+	// Check for frame sync option
+	bool IsFrameSyncEnabled();
+
+
+	//
+	// Data sharing
+	//
+
+	// Write data
+	bool WriteMemoryBuffer(const char* name, const char* data, int length);
+	// Create a shared memory buffer
+	bool CreateMemoryBuffer(const char* name, int length);
+	// Delete a shared memory buffer
+	bool DeleteMemoryBuffer();
+	// Get the size of a shared memory buffer
+	int GetMemoryBufferSize(const char* name);
+
+	//
+	// OpenGL shared texture access
+	//
+
+	// Bind OpenGL shared texture
+	bool BindSharedTexture();
+	// Un-bind OpenGL shared texture
+	bool UnBindSharedTexture();
+	// OpenGL shared texture ID
+	GLuint GetSharedTextureID();
+	
+	//
+	// Graphics compatibility
+	//
+
+	// Get user Auto GPU/CPU share
+	bool GetAutoShare();
+	// Set application Auto GPU/CPU share
+	void SetAutoShare(bool bAuto = true);
+	// Get user CPU share
+	bool GetCPUshare();
+	// Set application CPU share
+	// (re-test GL/DX compatibility if set to false)
+	void SetCPUshare(bool bCPU = true);
+
+	// OpenGL texture share compatibility
+	bool IsGLDXready();
+
+	//
+	// Sender names
+	//
+
+	// Number of senders
+	int GetSenderCount();
+	// Sender item name
+	bool GetSender(int index, char* sendername, int MaxSize = 256);
+	// Sender information
+	bool GetSenderInfo(const char* sendername, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle, DWORD &dwFormat);
+	// Current active sender
+	bool GetActiveSender(char* sendername);
+	// Set sender as active
+	bool SetActiveSender(const char* sendername);
+
+	//
+	// Adapter functions
+	//
+
+	// The number of graphics adapters in the system
+	int GetNumAdapters();
+	// Get adapter item name
+	bool GetAdapterName(int index, char* adaptername, int maxchars = 256);
+	// Current adapter name
+	char* AdapterName();
+	// Get current adapter index
+	int GetAdapter();
+	// Get the description and output display name of the current adapter
+	bool GetAdapterInfo(char* description, char* output, int maxchars);
+	// Get the description and output display name for a given adapter
+	bool GetAdapterInfo(int index, char* description, char* output, int maxchars);
+// Windows 10 Vers 1803, build 17134 or later
+#ifdef NTDDI_WIN10_RS4
+	// Get the Windows graphics preference for an application
+	int GetPerformancePreference(const char* path = nullptr);
+	// Set the Windows graphics preference for an application
+	bool SetPerformancePreference(int preference, const char* path = nullptr);
+	// Get the graphics adapter name for a Windows preference
+	bool GetPreferredAdapterName(int preference, char* adaptername, int maxchars);
+	// Set graphics adapter index for a Windows preference
+	bool SetPreferredAdapter(int preference);
+	// Availability of Windows graphics preference
+	bool IsPreferenceAvailable();
+	// Is the path a valid application
+	bool IsApplicationPath(const char* path);
+#endif
+
+	//
+	// User settings recorded in the registry by "SpoutSettings"
+	//
+
+	// Get user buffering mode
+	bool GetBufferMode();
+	// Set application buffering mode
+	void SetBufferMode(bool bActive = true);
+	// Get user number of pixel buffers
+	int GetBuffers();
+	// Set application number of pixel buffers
+	void SetBuffers(int nBuffers);
+	// Get user Maximum senders allowed
+	int GetMaxSenders();
+	// Set user Maximum senders allowed
+	void SetMaxSenders(int maxSenders);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Get user DX9 mode
+	bool GetDX9();
+	// Set user DX9 mode
+	bool SetDX9(bool bDX9 = true);
+	// Get user memory share mode
+	bool GetMemoryShareMode();
+	// Set user memory share mode
+	bool SetMemoryShareMode(bool bMem = true);
+	// Get user CPU mode
+	bool GetCPUmode();
+	// Set user CPU mode
+	bool SetCPUmode(bool bCPU);
+	// Get user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	int GetShareMode();
+	// Set user share mode
+	//  0 - texture, 1 - memory, 2 - CPU
+	void SetShareMode(int mode);
+
+	//
+	// Information
+	//
+
+	// The path of the host that produced the sender
+	bool GetHostPath(const char* sendername, char* hostpath, int maxchars);
+	// Vertical sync status
+	int  GetVerticalSync();
+	// Lock to monitor vertical sync
+	bool SetVerticalSync(int interval = 1);
+	// Get Spout version
+	int GetSpoutVersion();
+
+	//
+	// OpenGL utilities
+	//
+
+	// Create an OpenGL window and context for situations where there is none.
+	//   Not used if applications already have an OpenGL context.
+	//   Always call CloseOpenGL afterwards.
+	bool CreateOpenGL();
+	// Close OpenGL window
+	bool CloseOpenGL();
+	// Copy OpenGL texture with optional invert
+	//   Textures must be the same size
+	bool CopyTexture(GLuint SourceID, GLuint SourceTarget,
+		GLuint DestID, GLuint DestTarget,
+		unsigned int width, unsigned int height,
+		bool bInvert = false, GLuint HostFBO = 0);
+	// Copy OpenGL texture data to a pixel buffer
+	bool ReadTextureData(GLuint SourceID, GLuint SourceTarget,
+		void* data, unsigned int width, unsigned int height, unsigned int rowpitch,
+		GLenum dataformat, GLenum datatype, bool bInvert = false, GLuint HostFBO = 0);
+
+	//
+	// Formats
+	//
+
+	// Get sender DX11 shared texture format
+	DXGI_FORMAT GetDX11format();
+	// Set sender DX11 shared texture format
+	void SetDX11format(DXGI_FORMAT textureformat);
+	// Return OpenGL compatible DX11 format
+	DXGI_FORMAT DX11format(GLint glformat);
+	// Return DX11 compatible OpenGL format
+	GLint GLDXformat(DXGI_FORMAT textureformat = DXGI_FORMAT_UNKNOWN);
+	// Return OpenGL texture internal format
+	GLint GLformat(GLuint TextureID, GLuint TextureTarget);
+	// Return OpenGL texture format description
+	std::string GLformatName(GLint glformat = 0);
+
+	//
+	// 2.006 compatibility
+	//
+
+	// Create a sender
+	bool CreateSender(const char* Sendername, unsigned int width = 0, unsigned int height = 0, DWORD dwFormat = 0);
+	// Update a sender
+	bool UpdateSender(const char* Sendername, unsigned int width, unsigned int height);
+
+	// Legacy OpenGL DrawTo function
+	// See _SpoutCommon.h_ #define legacyOpenGL
+#ifdef legacyOpenGL
+	// Render a texture to the shared texture. 
+	bool DrawToSharedTexture(GLuint TextureID, GLuint TextureTarget, unsigned int width, unsigned int height, float max_x = 1.0, float max_y = 1.0, float aspect = 1.0, bool bInvert = false, GLuint HostFBO = 0);
+#endif
+
+	// For access to all functions
+	Spout spout;
+
+protected :
+
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutSenderNames.h 
+---------------------------------------- 
+/*
+
+	spoutSenderNames.h
+
+	Spout sender management
+
+	Thanks and credit to Malcolm Bechard for modifications to this class
+
+	https://github.com/mbechard	
+
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ */
+#pragma once
+#ifndef __spoutSenderNames__ // standard way as well
+#define __spoutSenderNames__
+
+#include "SpoutCommon.h"
+#include "SpoutSharedMemory.h"
+
+#include <windowsx.h>
+#include <wingdi.h>
+#include <set>
+#include <map>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <intrin.h> // for __movsd
+#include <stdint.h> // for _uint32
+#include <assert.h>
+#ifdef _M_ARM64
+#include <sse2neon.h> // For ARM
+#endif
+
+// 100 msec wait for events
+#define SPOUT_WAIT_TIMEOUT 100
+
+// MaxSenders define replaced by a global class variable (Maximum for list of Sender names)
+#define SpoutMaxSenderNameLen 256
+
+
+// The texture information structure that is saved to shared memory
+// and used for communication between senders and receivers
+// uint32_t is used for compatibility between 32bit and 64bit
+// The structure is declared here so that this class is can be independent of opengl
+//
+// Use helper functions for conversion between HANDLE and uint32_t
+// https://msdn.microsoft.com/en-us/library/aa384267%28VS.85%29.aspx
+// in SpoutGLDXinterop.cpp and SpoutSenderNames
+//
+struct SharedTextureInfo {		// 280 bytes total
+	uint32_t shareHandle;		// 4 bytes : texture handle
+	uint32_t width;				// 4 bytes : texture width
+	uint32_t height;			// 4 bytes : texture height
+	uint32_t format;			// 4 bytes : texture pixel format
+	uint32_t usage;				// 4 bytes : texture usage
+	uint8_t  description[256];	// 256 bytes : description
+	uint32_t partnerId;			// 4 bytes : ID
+};
+
+//
+// GUIDs for additional sender information maps
+// Used for development work
+
+// Example 
+// {AB5C33D6-3654-43F9-85F6-F54872B0460B}
+static const char* GUID_queue = "AB5C33D6-3654-43F9-85F6-F54872B0460B";
+
+
+
+class SPOUT_DLLEXP spoutSenderNames {
+
+	public:
+
+		spoutSenderNames();
+		~spoutSenderNames();
+
+		//
+		// public functions
+		//
+
+		//
+		// Sender name registration
+		//
+
+		// Register a sender name in the list of senders
+		bool RegisterSenderName(char* sendername, bool bNewname = false);
+		// Remove a name from the list
+		bool ReleaseSenderName(const char* sendername);
+		// Find a name in the list
+		bool FindSenderName(const char* sendername);
+
+		//
+		// Functions to retrieve info about the sender set map and the senders in it
+		//
+
+		// Retrieve the sender name list as a set of names
+		bool GetSenderNames(std::set<std::string> *sendernames);
+		// Number of senders in the list
+		int  GetSenderCount();
+		// Sender item name
+		bool GetSender(int index, char* sendername, int MaxSize = 256);
+		// Sender index into the set of names
+		int GetSenderIndex(const char* sendername);
+		// Information about a sender from an index into the list
+		bool GetSenderNameInfo(int index, char* sendername, int sendernameMaxSize, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle);
+
+		//
+		// Maximum number of senders allowed in the list
+		// Applies for versions 2.005 and after
+		//
+
+		// Get the maximum number from the registry
+		int GetMaxSenders();
+		// Set the maximum number of senders in a new sender map
+		void SetMaxSenders(int maxSenders);
+
+		//
+		// Functions to read and write info to a sender memory map
+		//
+
+		// Get sender information
+		bool GetSenderInfo (const char* sendername, unsigned int &width, unsigned int &height, HANDLE &dxShareHandle, DWORD &dwFormat);
+		// Set sender information
+		bool SetSenderInfo (const char* sendername, unsigned int width, unsigned int height, HANDLE dxShareHandle, DWORD dwFormat);
+		// Set sender PartnerID field with "CPU" sharing method and GL/DX compatibility
+		bool SetSenderID(const char *sendername, bool bCPU, bool bGLDX);
+		// Generic sender map info read (returned in a shared texture information structure)
+		bool getSharedInfo (const char* sendername, SharedTextureInfo* info);
+		// Generic sender map info write
+		bool setSharedInfo (const char* sendername, const SharedTextureInfo* info);
+		// Test for shared info memory map existence
+		bool hasSharedInfo(const char* sendername);
+
+		//
+		// Functions to maintain the active sender
+		//
+
+		// Set the active sender - the first retrieved by a receiver
+		bool SetActiveSender (const char* sendername);
+		// Get the current active sender
+		bool GetActiveSender (char *sendername, const int maxlength = SpoutMaxSenderNameLen);
+		// Get active sender information
+		bool GetActiveSenderInfo (SharedTextureInfo* info);
+		// Return details of the current active sender
+		bool FindActiveSender (char *activename, unsigned int& width, unsigned int& height, HANDLE& hSharehandle, DWORD& dwFormat, const int maxlength = SpoutMaxSenderNameLen);
+
+		//
+		// Functions to Create, Find or Update a sender
+		// without initializing DirectX or the GL/DX interop functions
+		//
+
+		// Create a sender and register the name in the sender list
+		bool CreateSender(char* sendername, unsigned int width, unsigned int height, HANDLE hSharehandle, DWORD dwFormat = 0);
+		// Update an existing sender
+		bool UpdateSender (const char* sendername, unsigned int width, unsigned int height, HANDLE hSharehandle, DWORD dwFormat = 0);
+		// Check details of a sender
+		bool CheckSender  (const char* sendername, unsigned int &width, unsigned int &height, HANDLE &hSharehandle, DWORD &dwFormat);
+		// Find a sender and return details
+		bool FindSender   (char* sendername, unsigned int &width, unsigned int &height, HANDLE &hSharehandle, DWORD &dwFormat);
+		// Find a sender in the class names set
+		bool FindSender   (const char* sendername);
+		// Release orphaned senders
+		void CleanSenders();
+
+protected:
+
+		// Sender name set management
+		bool CreateSenderSet();
+		bool GetSenderSet (std::set<std::string>& SenderNames);
+
+		// Active sender management
+		bool setActiveSenderName (const char* SenderName);
+		// bool getActiveSenderName (char SenderName[SpoutMaxSenderNameLen]);
+		bool getActiveSenderName (char *SenderName, const int maxlength = SpoutMaxSenderNameLen);
+
+		// Goes through the full list of sender names and cleans up
+		// any that shouldn't still be around
+		void cleanSenderSet();
+
+		// Functions to manage shared memory map access
+		static void readSenderSetFromBuffer(const char* buffer, std::set<std::string>& SenderNames, int maxSenders);
+		static void	writeBufferFromSenderSet(const std::set<std::string>& SenderNames, char *buffer, int maxSenders);
+
+		SpoutSharedMemory m_senderNames;
+		SpoutSharedMemory m_activeSender;
+
+		// This should be a unordered_map of sender names ->SharedMemory
+		// to handle multiple inputs and outputs all going through the
+		// same spoutSenderNames class
+		// Make this a pointer to avoid size differences between compilers
+		// if the .dll is compiled with something different
+		std::unordered_map<std::string, SpoutSharedMemory*>* m_senders;
+		int m_MaxSenders; // maximum number of senders via registry
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutSharedMemory.h 
+---------------------------------------- 
+/*
+
+	SpoutSharedMemory.h
+	
+	Thanks and credit to Malcolm Bechard the author of this class
+
+	https://github.com/mbechard
+
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	Copyright (c) 2014-2025, Lynn Jarvis. All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without modification, 
+	are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+	IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#pragma once
+
+#ifndef __SpoutSharedMemory_ // standard way as well
+#define __SpoutSharedMemory_
+
+#include "SpoutCommon.h"
+#include <windowsx.h>
+#include <wingdi.h>
+
+using namespace spoututils;
+
+//
+// Result of memory segment creation
+//
+enum SpoutCreateResult {
+	SPOUT_CREATE_FAILED = 0,
+	SPOUT_CREATE_SUCCESS,
+	SPOUT_ALREADY_EXISTS,
+	SPOUT_ALREADY_CREATED,
+};
+
+class SPOUT_DLLEXP SpoutSharedMemory {
+
+public:
+
+	SpoutSharedMemory();
+	~SpoutSharedMemory();
+
+	// Create a new memory segment, or attach to an existing one
+	SpoutCreateResult Create(const char* name, int size);
+
+	// Open an existing memory map
+	bool Open(const char* name);
+
+	// Close a map
+	void Close();
+
+	// Lock an open map and return the buffer
+	char* Lock();
+
+	// Unlock a map
+	void Unlock();
+
+	// Name of an existing map
+	const char* Name();
+	
+	// Size of an existing map
+	int Size();
+
+	// Print map information for debugging
+	void Debug();
+
+private:
+
+	char*  m_pBuffer; // Buffer pointer
+	HANDLE m_hMap; // Map handle
+	HANDLE m_hMutex; // Mutex for map access
+	int m_lockCount; // Map access lock count
+	char* m_pName; // Map name
+	int m_size; // Map size
+
+};
+
+#endif
+ 
+---------------------------------------- 
+SpoutUtils.h 
+---------------------------------------- 
+/*
+
+						SpoutUtils.h
+
+					General utility functions
+
+		- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+		Copyright (c) 2017-2025, Lynn Jarvis. All rights reserved.
+
+		Redistribution and use in source and binary forms, with or without modification, 
+		are permitted provided that the following conditions are met:
+
+		1. Redistributions of source code must retain the above copyright notice, 
+		   this list of conditions and the following disclaimer.
+
+		2. Redistributions in binary form must reproduce the above copyright notice, 
+		   this list of conditions and the following disclaimer in the documentation 
+		   and/or other materials provided with the distribution.
+
+		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	AND ANY 
+		EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE	ARE DISCLAIMED. 
+		IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+		PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+		INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+		LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#pragma once
+#ifndef __spoutUtils__ // standard way as well
+#define __spoutUtils__
+
+// Enable this define to use independently of Spout source files
+// See also the stand alone define in SpoutGLextensions
+// #define standaloneUtils
+
+#ifdef standaloneUtils
+#define SPOUT_DLLEXP
+#else
+// For use together with Spout source files
+#include "SpoutCommon.h" // for legacyOpenGL define and Utils
+#include <stdint.h> // for _uint32 etc
+#endif
+
+#include <windows.h>
+#include <stdio.h> // for console
+#include <iostream> // std::cout, std::end
+#include <fstream> // for log file
+#include <time.h> // for time and date
+#include <io.h> // for _access
+#include <direct.h> // for _getcwd
+#include <vector>
+#include <string>
+#include <shellapi.h> // for shellexecute
+#include <commctrl.h> // For TaskDialogIndirect
+#include <math.h> // for round
+#include <algorithm> // for string character remove
+
+//
+// C++11 timer is only available for MS Visual Studio 2015 and above.
+//
+// Note that _MSC_VER may not correspond correctly if an earlier platform toolset
+// is selected for a later compiler e.g. Visual Studio 2010 platform toolset for
+// a Visual studio 2017 compiler. "#include <chrono>" will then fail.
+// If this is a problem, remove _MSC_VER_ and manually enable/disable the USE_CHRONO define.
+//
+// PR #84  Fixes for clang
+// PR #114  Fixes for MingW
+#if (defined(_MSC_VER) && (_MSC_VER >= 1900)) || (defined(__cplusplus) && (__cplusplus >= 201103L))
+
+#define USE_CHRONO
+#endif
+
+#ifdef USE_CHRONO
+#include <chrono> // c++11 timer
+#include <thread>
+#endif
+
+#pragma comment(lib, "shell32.lib") // for shellexecute
+#pragma comment(lib, "advapi32.lib") // for registry functions
+#pragma comment(lib, "version.lib") // for version resources where necessary
+#pragma comment(lib, "comctl32.lib") // For taskdialog
+
+// TaskDialog requires comctl32.dll version 6
+#ifdef _MSC_VER
+// https://learn.microsoft.com/en-us/windows/win32/controls/cookbook-overview
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+
+// SpoutUtils
+namespace spoututils {
+
+	enum SpoutLogLevel {
+		// Disable all messages
+		SPOUT_LOG_SILENT,
+		// Show all messages
+		SPOUT_LOG_VERBOSE,
+		// Show information messages - default
+		SPOUT_LOG_NOTICE,
+		// Show warning, errors and fatal
+		SPOUT_LOG_WARNING,
+		// Show errors and fatal
+		SPOUT_LOG_ERROR,
+		// Show only fatal errors
+		SPOUT_LOG_FATAL,
+		// Ignore log levels
+		SPOUT_LOG_NONE
+	};
+
+	//
+	// Information
+	//
+
+	// Get SDK version number string e.g. "2.007.000"
+	// Optional - return as a single number
+	// e.g. 2.006 = 2006, 2.007 = 2007, 2.007.009 = 2007009
+	std::string SPOUT_DLLEXP GetSDKversion(int* number = nullptr);
+
+	// Get the user Spout version from the registry
+	// Optional - return as a single number
+	std::string SPOUT_DLLEXP GetSpoutVersion(int* number = nullptr);
+
+	// Computer type
+	bool SPOUT_DLLEXP IsLaptop();
+
+	// Get the module handle of an executable or dll
+	HMODULE SPOUT_DLLEXP GetCurrentModule();
+
+	// Get executable or dll version
+	std::string SPOUT_DLLEXP GetExeVersion(const char* path);
+
+	// Get executable or dll path
+	std::string SPOUT_DLLEXP GetExePath(bool bFull = false);
+
+	// Get executable or dll name
+	std::string SPOUT_DLLEXP GetExeName();
+
+	// Remove file name and return the path
+	std::string SPOUT_DLLEXP GetPath(std::string fullpath);
+
+	// Remove path and return the file name
+	std::string SPOUT_DLLEXP GetName(std::string fullpath);
+
+	//
+	// Console management
+	//
+
+	// Open console window.
+	// A console window opens without logs.
+	// Useful for debugging with console output.
+	void SPOUT_DLLEXP OpenSpoutConsole(const char* title = nullptr);
+	
+	// Close console window.
+	// The optional warning displays a MessageBox if user notification is required.
+	void SPOUT_DLLEXP CloseSpoutConsole(bool bWarning = false);
+
+	// Enable logging to the console.
+	// Logs are displayed in a console window.  
+	// Useful for program development.
+	void SPOUT_DLLEXP EnableSpoutLog(const char* title = nullptr);
+
+	// Enable logging to a file with optional append.
+	// As well as a console window, you can output logs to a text file. 
+	// Default extension is ".log" unless the full path is used.
+	// For no file name or path the executable name is used.
+	//     Example : EnableSpoutLogFile("Sender.log");
+	// The log file is re-created every time the application starts
+	// unless you specify to append to the existing one.  
+	//    Example : EnableSpoutLogFile("Sender.log", true);
+	// The file is saved in the %AppData% folder unless you specify the full path :  
+	//    C:>Users>username>AppData>Roaming>Spout   
+	// You can find and examine the log file after the application has run.
+	void SPOUT_DLLEXP EnableSpoutLogFile(const char* filename = nullptr, bool bAppend = false);
+
+	// Disable logging to file
+	void SPOUT_DLLEXP DisableSpoutLogFile();
+
+	// Remove a log file
+	void SPOUT_DLLEXP RemoveSpoutLogFile(const char* filename = nullptr);
+
+	// Disable logging to console and file
+	void SPOUT_DLLEXP DisableSpoutLog();
+
+	// Disable logging temporarily
+	void SPOUT_DLLEXP DisableLogs();
+	
+	// Enable logging again
+	void SPOUT_DLLEXP EnableLogs();
+
+	// Are console logs enabled
+	bool SPOUT_DLLEXP LogsEnabled();
+
+	// Is file logging enabled
+	bool SPOUT_DLLEXP LogFileEnabled();
+
+	// Return the full log file path
+	std::string SPOUT_DLLEXP GetSpoutLogPath();
+
+	// Return the log file as a string
+	std::string SPOUT_DLLEXP GetSpoutLog(const char* filepath = nullptr);
+
+	// Show the log file folder in Windows Explorer
+	void SPOUT_DLLEXP ShowSpoutLogs();
+	
+	// Set the current log level
+	void SPOUT_DLLEXP SetSpoutLogLevel(SpoutLogLevel level);
+	
+	// General purpose log
+	void SPOUT_DLLEXP SpoutLog(const char* format, ...);
+	
+	// Verbose - show log for SPOUT_LOG_VERBOSE or above
+	void SPOUT_DLLEXP SpoutLogVerbose(const char* format, ...);
+	
+	// Notice - show log for SPOUT_LOG_NOTICE or above
+	void SPOUT_DLLEXP SpoutLogNotice(const char* format, ...);
+	
+	// Warning - show log for SPOUT_LOG_WARNING or above
+	void SPOUT_DLLEXP SpoutLogWarning(const char* format, ...);
+	
+	// Error - show log for SPOUT_LOG_ERROR or above
+	void SPOUT_DLLEXP SpoutLogError(const char* format, ...);
+	
+	// Fatal - always show log
+	void SPOUT_DLLEXP SpoutLogFatal(const char* format, ...);
+
+	// Logging function.
+	void SPOUT_DLLEXP _doLog(SpoutLogLevel level, const char* format, va_list args);
+
+	// Print to console (printf replacement)
+	int SPOUT_DLLEXP _conprint(const char* format, ...);
+
+	//
+	// MessageBox dialog
+	//
+
+	// MessageBox dialog with optional timeout.
+	// The dialog closes itself if a timeout is specified.
+	int SPOUT_DLLEXP SpoutMessageBox(const char* message, DWORD dwMilliseconds = 0);
+
+	// MessageBox with variable arguments
+	int SPOUT_DLLEXP SpoutMessageBox(const char* caption, const char* format, ...);
+	
+	// MessageBox with variable arguments and icon, buttons
+	int SPOUT_DLLEXP SpoutMessageBox(const char* caption, UINT uType, const char* format, ...);
+
+	// MessageBox dialog with standard arguments.
+	// Replaces an existing MessageBox call.
+	// uType options : standard MessageBox buttons and icons
+	// MB_USERICON - use together with SpoutMessageBoxIcon
+	// Hyperlinks can be included in the content using HTML format.
+	// For example : <a href=\"https://spout.zeal.co/\">Spout home page</a>
+	// Only double quotes are supported and must be escaped.
+	int SPOUT_DLLEXP SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType, DWORD dwMilliseconds = 0);
+
+	// MessageBox dialog with standard arguments
+	// including taskdialog main instruction large text
+	int SPOUT_DLLEXP SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption,  UINT uType, const char* instruction, DWORD dwMilliseconds = 0);
+
+	// MessageBox dialog with an edit control for text input
+	// Can be used in place of a specific application resource dialog
+	//   o For message content, the control is in the footer area
+	//   o If no message, the control is in the main content area
+	//   o All SpoutMessageBox functions such as user icon and buttons are available
+	int SPOUT_DLLEXP SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType, std::string& text);
+
+	// MessageBox dialog with a combobox control for item selection
+	// Can be used in place of a specific application resource dialog
+	// Properties the same as the edit control
+	int SPOUT_DLLEXP SpoutMessageBox(HWND hwnd, LPCSTR message, LPCSTR caption, UINT uType,
+		std::vector<std::string> items, int &selected);
+
+	// Custom icon for SpoutMessageBox from resources
+	void SPOUT_DLLEXP SpoutMessageBoxIcon(HICON hIcon);
+
+	// Custom icon for SpoutMessageBox from file
+	bool SPOUT_DLLEXP SpoutMessageBoxIcon(std::string iconfile);
+
+	// Custom button for SpoutMessageBox
+	void SPOUT_DLLEXP SpoutMessageBoxButton(int ID, std::wstring title);
+
+	// Activate modeless mode using SpoutPanel.exe
+	bool SPOUT_DLLEXP SpoutMessageBoxModeless(bool bMode = true);
+
+	// Window handle for SpoutMessageBox where not specified
+	void SPOUT_DLLEXP SpoutMessageBoxWindow(HWND hWnd);
+
+	// Position to centre SpoutMessageBox
+	void SPOUT_DLLEXP SpoutMessageBoxPosition(POINT pt);
+
+	// Copy text to the clipboard
+	bool SPOUT_DLLEXP CopyToClipBoard(HWND hwnd, const char* text);
+
+	// Open logs folder
+	bool SPOUT_DLLEXP OpenSpoutLogs();
+
+	//
+	// Registry utilities
+	//
+
+	// Read subkey DWORD value
+	bool SPOUT_DLLEXP ReadDwordFromRegistry(HKEY hKey, const char* subkey, const char* valuename, DWORD* pValue);
+	
+	// Write subkey DWORD value
+	bool SPOUT_DLLEXP WriteDwordToRegistry(HKEY hKey, const char* subkey, const char* valuename, DWORD dwValue);
+	
+	// Read subkey character string
+	bool SPOUT_DLLEXP ReadPathFromRegistry(HKEY hKey, const char* subkey, const char* valuename, char* filepath, DWORD dwSize = MAX_PATH);
+	
+	// Write subkey character string
+	bool SPOUT_DLLEXP WritePathToRegistry(HKEY hKey, const char* subkey, const char* valuename, const char* filepath);
+	
+	// Write subkey binary hex data string
+	bool SPOUT_DLLEXP WriteBinaryToRegistry(HKEY hKey, const char* subkey, const char* valuename, const unsigned char* hexdata, DWORD nchars);
+
+	// Remove subkey value name
+	bool SPOUT_DLLEXP RemovePathFromRegistry(HKEY hKey, const char* subkey, const char* valuename);
+	
+	// Delete a subkey and its values.
+	//   It must be a subkey of the key that hKey identifies, but it cannot have subkeys.  
+	//   Note that key names are not case sensitive.  
+	bool SPOUT_DLLEXP RemoveSubKey(HKEY hKey, const char* subkey);
+	
+	// Find subkey
+	bool SPOUT_DLLEXP FindSubKey(HKEY hKey, const char* subkey);
+
+	//
+	// Timing functions
+	//
+
+	// Monitor refresh rate
+	double SPOUT_DLLEXP GetRefreshRate();
+
+	// Start timing period
+	void SPOUT_DLLEXP StartTiming();
+
+#ifdef USE_CHRONO
+	// Stop timing and return milliseconds or microseconds elapsed.
+	// (microseconds default).
+	// Code console output can be enabled for quick timing tests.
+	double SPOUT_DLLEXP EndTiming(bool microseconds = false, bool bPrint = false);
+	// Microseconds elapsed since epoch
+	double SPOUT_DLLEXP ElapsedMicroseconds();
+#else
+	double SPOUT_DLLEXP EndTiming();
+#endif
+
+	void SPOUT_DLLEXP StartCounter();
+	double SPOUT_DLLEXP GetCounter();
+
+	//
+	// Private functions
+	//
+	namespace
+	{
+		// Local functions
+		void _logtofile(bool append = false);
+		std::string _getLogPath();
+		std::string _getLogFilePath(const char* filename);
+		std::string _levelName(SpoutLogLevel level);
+		// Taskdialog for SpoutMessageBox
+		int MessageTaskDialog(HWND hWnd, const char* content, const char* caption, DWORD dwButtons, DWORD dwMilliseconds);
+		// TaskDialogIndirect callback to handle timer, topmost and hyperlinks
+		HRESULT TDcallbackProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LONG_PTR lpRefData);
+#ifndef _MSC_VER
+		// Timeout MessageBox for other compilers
+		int MessageBoxTimeoutA(IN HWND hWnd,
+			IN LPCSTR lpText, IN LPCSTR lpCaption, IN UINT uType,
+			IN WORD wLanguageId, IN DWORD dwMilliseconds);
+#endif
+
+		// Use ShellExecutEx to open a program
+		bool ExecuteProcess(const char* path, const char* command = nullptr);
+		// Open SpoutPanel with command line for modeless SpoutMessageBox
+		bool OpenSpoutPanel(const char* message);
+		// Application window
+		HWND hwndMain = NULL;
+		// Taskdialog window to prevent multiple open
+		HWND hwndTask = NULL;
+		// Position for TaskDialog window centre
+		POINT TDcentre = {};
+		// For topmost
+		HWND hwndTop = NULL;
+		bool bTopMost = false;
+		// Modeless TaskDialog by way of OpenSpoutPanel
+		bool bModeless = false; // Default use local TaskDialogIndirect
+		// For custom icon
+		HICON hTaskIcon = NULL;
+
+		// For custom buttons
+		std::vector<int>TDbuttonID;
+		std::vector<std::wstring>TDbuttonTitle;
+
+		// Main instruction text
+		std::wstring wstrInstruction;
+
+		// For edit text control
+		bool bEdit = false;
+		HWND hEdit = NULL;
+		std::string stredit;
+		#define IDC_TASK_EDIT 101
+
+		// For combo box control
+		bool bCombo = false;
+		HWND hCombo = NULL;
+		std::vector<std::string> comboitems;
+		int comboindex = 0;
+		#define IDC_TASK_COMBO 102
+
+	}
+
+}
+
+#endif
+ 
