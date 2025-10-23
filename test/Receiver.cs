@@ -30,43 +30,44 @@ public class Receiver : OpenTKWindow, IDisposable
         base.OnLoad();
 
         // writes to %AppData%\Spout (paste that into File Explorer)
-        SpoutUtils.EnableSpoutLogFile("test.log", false);
-        SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
+        //SpoutUtils.EnableSpoutLogFile("test.log", false);
+        //SpoutUtils.SetSpoutLogLevel(SpoutLogLevel.SPOUT_LOG_VERBOSE);
 
-        SpoutUtils.SpoutLogNotice("-------- receiver ctor");
+        //SpoutUtils.SpoutLogNotice("-------- receiver ctor");
         receiver = new();
         if (!string.IsNullOrWhiteSpace(name)) receiver.SetActiveSender(name);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        SpoutUtils.SpoutLogNotice("-------- ReceiveTexture");
+        //SpoutUtils.SpoutLogNotice("-------- ReceiveTexture");
         if (receiver.ReceiveTexture()) // should auto-connect
         {
-            SpoutUtils.SpoutLogNotice("-------- IsUpdated");
+            //SpoutUtils.SpoutLogNotice("-------- IsUpdated");
             if (receiver.IsUpdated)
             {
-                SpoutUtils.SpoutLogNotice("-------- SharedTextureID");
+                //SpoutUtils.SpoutLogNotice("-------- SharedTextureID");
                 textureID = (int)receiver.SharedTextureID;
             }
             else
             {
                 textureID = -1;
             }
-            SpoutUtils.SpoutLogNotice($"-------- textureID {textureID}");
+            //SpoutUtils.SpoutLogNotice($"-------- textureID {textureID}");
         }
 
+        // this calls OpenGLU SetUniforms and Draw
         base.OnRenderFrame(e);
     }
 
-    // called from OpenGLUtils.SetUniforms
+    // called from OpenGLUtils.SetUniforms via base class OnRenderFrame
     internal void SetTextureUniformCallback()
     {
         if (textureID == -1) return;
-        SpoutUtils.SpoutLogNotice("-------- BindSharedTexture");
+        //SpoutUtils.SpoutLogNotice("-------- BindSharedTexture");
         receiver.BindSharedTexture();
         Shader.SetTexture("receivedTexture", textureID, TextureUnit.Texture0);
-        SpoutUtils.SpoutLogNotice("-------- UnBindSharedTexture");
+        //SpoutUtils.SpoutLogNotice("-------- UnBindSharedTexture");
         _ = receiver.UnBindSharedTexture;
     }
 
