@@ -41,20 +41,19 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        if (receiver.ReceiveTexture())
+        if (receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, 0))
         {
-            _ = receiver.IsUpdated;
-
-            int width = (int)((float)receiver.SenderWidth * SCALE);
-            int height = (int)((float)receiver.SenderHeight * SCALE);
-            if(width != OpenGLUtils.Width || height != OpenGLUtils.Height)
+            if(receiver.IsUpdated)
             {
-                OpenGLUtils.Width = width;
-                OpenGLUtils.Height = height;
-                OpenGLUtils.Allocate();
+                int width = (int)((float)receiver.SenderWidth * SCALE);
+                int height = (int)((float)receiver.SenderHeight * SCALE);
+                if (width != OpenGLUtils.Width || height != OpenGLUtils.Height)
+                {
+                    OpenGLUtils.Width = width;
+                    OpenGLUtils.Height = height;
+                    OpenGLUtils.Allocate();
+                }
             }
-
-            receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, 0);
         }
 
         base.OnRenderFrame(e);
