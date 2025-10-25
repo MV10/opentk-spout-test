@@ -41,7 +41,7 @@ public class AllocatingReceiver : OpenTKWindow, IDisposable
 
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        if (receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, 0))
+        if (receiver.ReceiveTexture((uint)OpenGLUtils.TextureHandle, (uint)TextureTarget.Texture2D, INVERT, HostFbo:0))
         {
             if(receiver.IsUpdated)
             {
