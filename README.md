@@ -7,7 +7,7 @@ The project accepts one of three command-line arguments:
 * `receiver` copies another program's output using a shared texture
 * `alloc` is a receiver mode using an internally-allocated texture
 
-> NOTE: Spout2 has a bug with the shared texture commands, so `receiver` mode is not currently working. The Spout2 maintainer is aware of this and working on a fix. The `alloc` mode for reciving content works correctly.
+> NOTE: The `receiver` mode is not currently working. The `alloc` mode for reciving content works correctly.
 
 An optional second argument is a Spout sender name (enclosed in quotes if the name includes spaces). For sender mode, the name identifies the sender. The default sender name is "test" if none is specified. For receiver modes, the name identifies the sender to receive from. If it is not specified, the receiver attaches to the first sender it finds.
 
